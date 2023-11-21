@@ -1,0 +1,201 @@
+$border-radius: 0.5rem;
+$font-weight-bold: 700;
+$font-weight-mid: 600;
+$font-weight-semi-mid: 500;
+$font-weight-normal: 400;
+$font-size-heading: 2rem;
+$font-size-subheading: 1.25rem;
+$font-size-small-subheading: 0.775rem;
+$font-size-normal: 1rem;
+$font-size-small: 0.625rem;
+$primary-color: rgb(32,34,33);
+$secondary-color: #f2f2f2;
+$tertiary-color: #AAAAAA;
+$login-background-color: rgb(228,228,228);
+$primary-background-color: rgb(255,255,255);
+$submit-button-background-color: #1155D9;
+$active-background-color: rgba(255, 255, 255, 0.51);
+
+:root {
+	--border-radius: #{$border-radius};
+	--font-weight-bold: #{$font-weight-bold};
+	--font-weight-mid: #{$font-weight-mid};
+	--font-weight-semi-mid: #{$font-weight-semi-mid};
+	--font-weight-normal: #{$font-weight-normal};
+	--font-size-heading: #{$font-size-heading};
+	--font-size-subheading: #{$font-size-subheading};
+	--font-size-small-subheading: #{$font-size-small-subheading};
+	--font-size-normal: #{$font-size-normal};
+	--font-size-small: #{$font-size-small};
+	--primary-color: #{$primary-color};
+	--secondary-color: #{$secondary-color};
+	--tertiary-color: #{$tertiary-color};
+	--primary-background-color: #{$primary-background-color};
+	--login-background-color: #{$login-background-color};
+	--active-background-color: #{$active-background-color};
+	--submit-button-background-color: #{$submit-button-background-color};
+}
+
+@font-face {
+	font-family: 'Blanka';
+	src: url('../public/Blanka-Regular.otf') format('opentype');
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	-webkit-tap-highlight-color: transparent; 
+}
+
+body {
+	font-family: 'Poppins', sans-serif;
+	scroll-behavior: smooth;
+	scrollbar-width: none;
+}
+
+.wrapper {
+	display: flex;
+	flex-direction: column;
+	padding: 1.313rem;
+	margin: 0 auto;
+	max-width: 420px;
+}
+
+.heading {
+	font-family: 'Blanka';
+	letter-spacing: 5px;
+	position: relative;
+    left: 5px;
+    margin-bottom: 10px;
+    margin-top: 3px;
+	font-size: var(--font-size-heading);
+	color: var(--primary-color);
+	font-weight: var(--font-weight-bold);
+}
+
+.subheading {
+	font-size: var(--font-size-subheading);
+	font-weight: var(--font-weight-mid);
+	color: var(--primary-color);
+}
+
+.smallSubheading {
+	font-size: var(--font-size-small-subheading);
+	color: var(--tertiary-color);
+	font-weight: var(--font-weight-normal);
+}
+
+.btn {
+	width: 100%;
+	padding: 1rem;
+	outline: none;
+	border: none;
+	border-radius: var(--border-radius);
+	cursor: pointer;
+}
+
+.input {
+	width: 100%;
+	padding: 1rem;
+	outline: none;
+	border: none;
+	border-radius: var(--border-radius);
+	background: #F5F5F5;
+}
+
+.appError {
+	margin: 10px 0 20px;
+	color: indianred;
+}
+
+@media screen and (max-width: 400px) {
+	.heading {
+		font-size: var(--font-size-subheading);
+	}
+
+	.subheading {
+		font-size: var(--font-size-normal);
+	}
+}
+
+@media screen and (max-width: 300px) {
+	.heading {
+		font-size: var(--font-size-normal);
+	}
+
+	.subheading {
+		font-size: var(--font-size-small);
+	}
+
+	.smallSubheading {
+		font-size: var(--font-size-small);
+	}
+}
+
+
+
+.customLoaderDots {
+	width: 50px;
+	height: 30px;
+	background:
+		radial-gradient(circle closest-side, #EAC94E 90%, #0000) 0% 50%,
+		radial-gradient(circle closest-side, #EAC94E 90%, #0000) 50% 50%,
+		radial-gradient(circle closest-side, #EAC94E 90%, #0000) 100% 50%;
+	background-size: calc(100% / 3) 12px;
+	background-repeat: no-repeat;
+	animation: d3 1s infinite linear;
+}
+
+@keyframes d3 {
+	20% { background-position: 0% 0%, 50% 50%, 100% 50%; }
+	40% { background-position: 0% 100%, 50% 0%, 100% 50%; }
+	60% { background-position: 0% 50%, 50% 100%, 100% 0%; }
+	80% { background-position: 0% 50%, 50% 50%, 100% 100%; }
+}
+
+.customLoaderSpinner {
+	display: inline-block;
+	position: relative;
+	width: 50px;
+	height: 50px;
+}
+
+.customLoaderSpinner::before,
+.customLoaderSpinner::after {
+	content: "";
+	grid-area: 1/1;
+	$c: radial-gradient(farthest-side, #EAC94E 92%, #0000);
+	background:
+		var($c) 50% 0,
+		var($c) 50% 100%,
+		var($c) 100% 50%,
+		var($c) 0 50%;
+	background-size: 12px 12px;
+	background-repeat: no-repeat;
+	animation: s2 1s infinite;
+}
+
+.customLoaderSpinner::before {
+	margin: 4px;
+	filter: hue-rotate(45deg);
+	background-size: 8px 8px;
+	animation-timing-function: linear;
+}
+
+@keyframes s2 {
+	100% { transform: rotate(.5turn); }
+}
+
+.customLoaderBox {
+	// for this you need to specify the width and height of the box and border-radius if needed
+	background:
+		linear-gradient(to bottom right, #0000 calc(50% - 40px), #EAC94E 50%, #0000 calc(50% + 40px))
+		bottom right / calc(200% + 80px) calc(200% + 80px)
+		var(--active-background-color);
+	animation: ct8 1s infinite;
+}
+
+@keyframes ct8 {
+  	100% { background-position: top left; }
+}

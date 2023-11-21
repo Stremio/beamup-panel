@@ -1,0 +1,34 @@
+@import '../../global.scss';
+
+.actionsContainer {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	justify-content: center;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 2rem;
+}
+
+.tasksContainer {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	align-items: center;
+	margin-bottom: 4rem;
+
+	.tasksInfoWrapper {
+		margin: 2rem 0;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-direction: row;
+		width: 100%;
+		max-width: 400px;
+
+		.tasksInfo {
+			display: flex;
+			gap: 0 0.5rem;
+			align-items: baseline;
+		}
+	}
+}

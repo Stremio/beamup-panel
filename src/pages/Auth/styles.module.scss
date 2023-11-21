@@ -1,0 +1,67 @@
+@import '../../global.scss';
+
+body {
+	background-color: var(--login-background-color);
+}
+
+.container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+
+	> div {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		transition: 0.3s;
+		width: 100%;
+
+		.appLogo {
+			margin-bottom: 10px;
+			width: 200px;
+			height: 200px;
+		}
+
+		.loginContainer {
+			background-color: #000;
+			width: 70%;
+			border-radius: var(--border-radius);
+			color: #fff;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			max-width: 250px;
+
+			.loginLink {
+				text-decoration: none;
+				color: #fff;
+				text-transform: uppercase;
+				cursor: default;
+				display: flex;
+				align-items: center;
+				height: 40px;
+
+				> span {
+					margin-left: 5px;
+				}
+			}
+		}
+
+		.footerContact {
+			margin-top: 20px;
+			color: rgb(32,34,33);
+			opacity: 0.75;
+			font-size: 11.5px;
+			a {
+				color: rgb(32,34,33);
+				text-decoration: none;
+			}
+			a:hover {
+				text-decoration: underline;
+			}
+		}
+	}
+}

@@ -1,0 +1,64 @@
+{
+	"name": "beamup-panel",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"start": "concurrently \"react-scripts start\" \"cd server && nodemon index.js \"",
+		"build": "react-scripts build",
+		"test": "react-scripts test",
+		"eject": "react-scripts eject"
+	},
+	"resolutions": {
+		"react-error-overlay": "6.0.9"
+	},
+	"dependencies": {
+		"@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+		"@testing-library/jest-dom": "^5.11.9",
+		"@testing-library/react": "^11.2.3",
+		"@testing-library/user-event": "^12.6.0",
+		"async.queue": "0.5.2",
+		"atomic-json-store": "1.0.0",
+		"axios": "^1.6.0",
+		"body-parser": "^1.19.0",
+		"concurrently": "^5.1.0",
+		"cookie-session": "^2.0.0",
+		"dotenv": "^8.2.0",
+		"dotenv-expand": "^10.0.0",
+		"express": "^4.17.1",
+		"express-http-proxy": "^2.0.0",
+		"form-data": "^3.0.0",
+		"framer-motion": "10.16.4",
+		"mdi-react": "^7.0.0",
+		"node-fetch": "^2.6.1",
+		"prop-types": "^15.8.1",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"react-json-view-lite": "^1.1.0",
+		"react-router": "^6.17.0",
+		"react-router-dom": "^6.17.0",
+		"react-scripts": "^5.0.1",
+		"sass": "^1.69.5",
+		"crypto-js": "4.0.0"
+	},
+	"eslintConfig": {
+		"extends": "react-app"
+	},
+	"browserslist": {
+		"production": [
+			">0.2%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 1 chrome version",
+			"last 1 firefox version",
+			"last 1 safari version"
+		]
+	},
+	"devDependencies": {
+		"eslint": "^8.53.0",
+		"eslint-plugin-react": "^7.33.2",
+		"joi": "^17.2.1",
+		"nodemon": "^3.0.1"
+	}
+}

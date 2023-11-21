@@ -1,0 +1,138 @@
+@import '../../global.scss';
+
+.ProjectContainer {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    border-radius: 5px;
+    background-color: #fff;
+    margin-bottom: 1.313rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    cursor: default;
+    text-decoration: none;
+    color: inherit;
+
+    .projectInfo {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+
+        .projectPriority {
+            width: 22px;
+            height: 22px;
+
+            .customLoaderBox {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                background-color: var(--primary-background-color);
+            }
+        }
+
+        .projectTitle {
+            font-size: var(--font-size-normal);
+            font-weight: var(--font-weight-semi-mid);
+
+            .customLoaderBox {
+                width: 250px;
+                height: 22px;
+                border-radius: var(--border-radius);
+                background-color: var(--primary-background-color);
+
+                @media screen and (max-width: 350px) {
+                    width: 200px;
+                }
+            }
+        }
+    }
+
+    .hrLine {
+        width: 100%;
+        margin: 1rem auto;
+        background: #BFBFBF;
+        height: 1px;
+    }
+
+    .projectSpecificInfo {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0 1rem;
+
+        .projectLabels {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.3rem 1rem;
+            flex-wrap: wrap;
+            max-width: 70%;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .projectLabel {
+            padding: 0.45rem;
+            border-radius: 1rem;
+            background-color: transparent;
+            font-size: var(--font-size-small);
+            font-weight: var(--font-weight-semi-mid);
+            text-align: center;
+            cursor: pointer;
+
+            .customLoaderBox {
+                width: 50px;
+                height: 100%;
+                border-radius: 1rem;
+                background-color: var(--primary-background-color);
+            }
+
+            &.restart {
+                background: black;
+                color: white;
+                border: 2px solid black;
+                opacity: 0.6;
+            }
+            
+            &.delete {
+                background: black;
+                color: white;
+                border: 2px solid black;
+                opacity: 0.6;
+                &:hover {
+                    color: #FF0000;
+                    border: 2px solid #FF0000;
+                    opacity: 1 !important;
+                }
+            }
+
+            &.see-logs {
+                background: black;
+                color: white;
+                border: 2px solid black;
+                opacity: 0.6;
+            }
+            
+            &:hover {
+                color: black;
+                background: transparent;
+                border: 2px solid black;
+                opacity: 0.5;
+            }
+        }
+    }
+}
+
+.lineThrough {
+    text-decoration: line-through;
+}
+
+.deletingMsg {
+    font-size: 12px;
+    opacity: .7;
+}

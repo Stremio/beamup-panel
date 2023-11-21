@@ -1,0 +1,118 @@
+@import '../../global.scss';
+
+.UserProfileWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    margin-bottom: 2rem;
+
+    &[compact] {
+        margin: 0;
+    }
+}
+
+.UserProfileContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0 1rem;
+    margin-bottom: 2rem;
+
+    &[compact] {
+        margin: 1rem;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 400px;
+        padding: 1rem 0.75rem;
+        
+        @media screen and (max-width: 300px) {
+            gap: 0 0.5rem;
+            padding: 0.5rem;
+        }
+    }
+
+    .tasksCount {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        max-width: 90px;
+        text-align: center;
+    }
+
+    .beamupHomeLogo {
+        width: 137px;
+        height: 37px;
+
+        @media screen and (max-width: 300px) {
+            width: 100px;
+            height: 27px;
+        }
+    }
+};
+
+.ImageContainer {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .userPfp {
+        width: 132px;
+        height: 132px;
+        border-radius: 50%;
+        box-shadow: 0px 0px 14px 0px #00000026;
+        cursor: pointer;
+
+        @media screen and (max-width: 300px) {
+            width: 98px;
+            height: 98px;
+        }
+    }
+    
+    .userPfpCompact {
+        width: 64px;
+        height: 64px;
+
+        @media screen and (max-width: 300px) {
+            width: 48px;
+            height: 48px;
+        }
+    }
+}
+
+.heading {
+    margin-bottom: 30px;
+}
+
+.headerBox {
+
+    h1 {
+        display: inline-block;
+    }
+
+    .logoutHolder {
+        background-color: white;
+        display: inline-block;
+        margin-left: 15px;
+        position: relative;
+        top: 5px;
+        box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.1490196078);
+        border-radius: 50%;
+        opacity: 0.8;
+        .logoutButton {
+            height: 36px;
+            float: right;
+        }
+        &:hover {
+            cursor: pointer;
+            background-color: black;
+            .logoutButton {
+                filter: invert(100%) sepia(0%) saturate(3362%) hue-rotate(238deg) brightness(114%) contrast(100%);
+            }
+        }
+    }
+}
