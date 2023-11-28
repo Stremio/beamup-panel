@@ -45,7 +45,7 @@ app.get('/login', (req, res) => {
     if (req.query.code) {
         auth(req, res);
     } else if (req.query.redirect_uri) {
-        res.redirect(`https://github.com/login/oauth/authorize?scope=user&client_id=${client_id}&redirect_uri=${req.query.redirect_uri}`);
+        res.redirect(`https://github.com/login/oauth/authorize?client_id=${client_id}&redirect_uri=${req.query.redirect_uri}`);
     }
 });
 
