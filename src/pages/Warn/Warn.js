@@ -14,7 +14,7 @@ export default function Home() {
 		const actionType = searchParams.get('action') || '';
 
 		if (project && actionType) {
-			setData((data) => { return { ...data, project, actionType, agreeLink: `/${actionType === 'delete' ? 'doDelete' : 'doRestart'}?proj=${encodeURIComponent(project)}` }; });
+			setData((data) => { return { ...data, project, actionType, agreeLink: `/${actionType === 'delete' ? 'doDelete' : 'doRestart'}?domain=${encodeURIComponent(window.location.hostname)}&proj=${encodeURIComponent(project)}` }; });
 		}
 	}, []);
 

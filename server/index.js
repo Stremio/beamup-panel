@@ -129,7 +129,7 @@ app.get('/doDelete', protected, async (req, res) => {
                 el.status = 'deleting'
             }
         });
-        slack.say(`project ${proj} was requested for deletion`)
+        slack.say(`${req.query.domain}: project ${proj} was requested for deletion`)
         return res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
