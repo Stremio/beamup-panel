@@ -32,7 +32,7 @@ const ApiProvider = ({ children, onAuthError }) => {
 
 	useEffect(() => {
 		initializeApi();
-	});
+	}, []);
 
 	return (
 		<ApiContext.Provider value={{ user, projects }}>
