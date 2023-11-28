@@ -140,6 +140,18 @@ app.get('/doRestart', protected, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
+        // this command takes long, we won't wait for it to finish
+        function respond(errMessage, redirect) {
+            if (redirectTimeout) {
+                clearTimeout(redirectTimeout);
+                redirectTimeout = false;
+            } else return;
+            if (redirect) res.redirect(redirect);
+            else res.status(500).json({ errMessage });
+        }
+        let redirectTimeout = setTimeout(() => {
+            respond(null, '/')
+        }, 5000);
         // 'docker service update --force beamup_1fe84bc728af-rpdb'
         // must prefix proj name with `beamup_`
         cp.exec(
@@ -147,18 +159,21 @@ app.get('/doRestart', protected, async (req, res) => {
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`err: ${err} ${err.message} ${err.toString()}`);
-                    return res.status(500).json({ errMessage: (err || {}).message || 'Unknown error' });
+                    respond((err || {}).message || 'Unknown error');
+                    return;
                 }
 
                 if (stderr) {
-                    return res.status(500).json({ errMessage: stderr });
+                    console.log(`stderr: ${stderr}`);
+                    respond(stderr);
+                    return;
                 }
 
                 if (stdout) {
                     console.log(`stdout: ${stdout}`);
                 }
 
-                return res.redirect('/');
+                respond(null, '/');
             }
         );
     } else {
