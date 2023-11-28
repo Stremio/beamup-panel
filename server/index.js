@@ -86,10 +86,10 @@ app.get('/getLogs', protected, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        // 'docker service logs beamup_1fe84bc728af-rpdb'
+        // 'docker service logs --raw beamup_1fe84bc728af-rpdb'
         // must prefix proj name with `beamup_`
         cp.exec(
-            `docker service logs beamup_${proj}`,
+            `docker service logs --raw beamup_${proj}`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`err: ${err} ${err.message} ${err.toString()}`);
