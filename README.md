@@ -26,7 +26,7 @@ CLIENT_ID=The GitHub Client ID
 CLIENT_SECRET=The GitHub Client secret
 SLACK_WEBHOOK=https://hooks.slack.com/services/...
 SLACK_CHANNEL=H190TA7TKD2
-SERVER_PORT=5000
+SERVER_PORT=4000
 ```
 
 
@@ -54,6 +54,23 @@ Use the `scripts/production-deploy.sh` script to deploy updates to the applicati
    ```
 
 This script will pull the latest changes from the repository, install dependencies, build the application, and restart the service.
+
+### Nginx config example to use as a Proxy
+```
+server {
+    listen 80;
+    server_name beamup.dev;
+
+    location / {
+        proxy_pass http://localhost:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
 
 
 
