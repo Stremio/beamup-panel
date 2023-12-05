@@ -16,7 +16,7 @@ npm run build
 ```
 
 
-## Running
+## Production deployment
 
 For production mode you need the following variables set either in `.env` file or exported to the environment:
 
@@ -28,6 +28,33 @@ SLACK_WEBHOOK=https://hooks.slack.com/services/...
 SLACK_CHANNEL=H190TA7TKD2
 SERVER_PORT=5000
 ```
+
+
+### Service Setup
+
+1. To set up the application as a service, copy the `scripts/beamup-panel.service` file to `/etc/systemd/system/`.
+2. Edit the file to update the paths according to your setup.
+3. Enable and start the service:
+   ```
+   sudo systemctl enable beamup-panel.service
+   sudo systemctl start beamup-panel.service
+   ```
+
+### Updating the Application
+
+Use the `scripts/production-deploy.sh` script to deploy updates to the application:
+
+1. Make the script executable:
+   ```
+   chmod +x scripts/production-deploy.sh
+   ```
+2. Run the script to deploy updates:
+   ```
+   ./scripts/production-deploy.sh
+   ```
+
+This script will pull the latest changes from the repository, install dependencies, build the application, and restart the service.
+
 
 
 ## Local Testing
