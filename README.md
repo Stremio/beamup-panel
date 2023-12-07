@@ -54,6 +54,8 @@ Use the `scripts/production-deploy.sh` script to deploy updates to the applicati
    ```
 
 This script will pull the latest changes from the repository, install dependencies, build the application, and restart the service.
+The user must have permissions to restart the service, this can be done by adding a line like this with `visudo`:
+`beamup ALL=(ALL) NOPASSWD: /bin/systemctl restart beamup-panel.service`
 
 ### Nginx config example to use as a Proxy
 ```
