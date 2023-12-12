@@ -1,0 +1,14 @@
+[Unit]
+Description=BeamUp Panel Node.js app
+After=network.target
+
+[Service]
+Type=simple
+User=beamup
+WorkingDirectory=/home/beamup/beamup-panel
+ExecStart=/usr/bin/node server/index.js
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
