@@ -38,7 +38,7 @@
 		"react-router-dom": "^6.17.0",
 		"react-scripts": "^5.0.1",
 		"sass": "^1.69.5",
-		"crypto-js": "4.0.0"
+		"crypto-js": "4.2.0"
 	},
 	"eslintConfig": {
 		"extends": "react-app"
