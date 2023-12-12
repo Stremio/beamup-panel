@@ -88,29 +88,25 @@ app.get('/getLogs', protected, async (req, res) => {
     if (userHasProject(login, proj)) {
         // 'docker service logs --raw -t beamup_1fe84bc728af-rpdb'
         // must prefix proj name with `beamup_`
-        cp.exec(
-            `docker service logs --raw -t beamup_${proj}`,
-            (err, stdout, stderr) => {
-                if (err) {
-                    console.log(`err: ${err} ${err.message} ${err.toString()}`);
-                    return res.status(500).json({ errMessage: (err || {}).message || 'Unknown error' });
-                }
+        const spw = cp.spawn(
+            'docker', ['service', 'logs', '--raw', '-t', `beamup_${proj}`]
+            )
 
-                if (stderr) {
-                    return res.status(500).json({ errMessage: stderr });
-                }
+        const send = (data) => {
+          res.write(data.toString() + '\n')
+        }
 
-                const logs = stdout || 'No logs'
+        res.set({
+          'Content-Type': 'text/plain',
+          'Content-Disposition': `attachment; filename="logs-${proj}-${Date.now()}.txt"`,
+        })
 
-                res.set({
-                  'Content-Type': 'text/plain',
-                  'Content-Length': logs.length,
-                  'Content-Disposition': `attachment; filename="logs-${proj}-${Date.now()}.txt"`,
-                })
+        spw.stdout.on('data', send)
+        spw.stderr.on('data', send)
 
-                res.status(200).send(logs)
-            }
-        );
+        spw.on('close', function (code) {
+            res.end()
+        })
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
