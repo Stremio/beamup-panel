@@ -1,4 +1,5 @@
 # BeamUp Panel
+The idea of this Panel is to be deployed with the [stremio-beamup project](https://github.com/Stremio/stremio-beamup).
 
 The BeamUp Web Panel includes the following features:
 - log in with github
