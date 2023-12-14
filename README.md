@@ -74,7 +74,12 @@ server {
     }
 }
 ```
-
+### Firewall config
+To configure the firewall as configured in stremio-beamup, and following same example, this commands should suffice
+```
+sudo iptables -A INPUT -p tcp --dport 4000 -j ACCEPT
+netfilter-persistent save
+```
 
 
 ## Local Testing
