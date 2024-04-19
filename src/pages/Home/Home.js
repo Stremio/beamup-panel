@@ -41,6 +41,8 @@ export default function Home() {
 							<Project
 								key={index}
 								title={proj?.name}
+								cpu={proj?.cpu}
+								memPerc={proj?.memPerc}
 								priority={proj?.status === 'running' ? 1 : proj?.status === 'failing' ? 10 : 0}
 								link={proj?.issueUrl || ''}
 								labels={proj?.labels || [{ id: '1', name: 'See Logs' }, { id: '2', name: 'Restart' }, { id: '3', name: 'Delete' }]}

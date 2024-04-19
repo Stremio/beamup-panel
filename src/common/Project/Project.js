@@ -5,7 +5,7 @@ import { usePriority } from './hooks';
 import { hoverAnimation } from '../../animations';
 import styles from './styles.module.scss';
 
-const Project = memo(({ labels, title, priority, assignees, link }) => {
+const Project = memo(({ labels, title, cpu, memPerc, priority, assignees, link }) => {
 	const handleShowPriorityIcon = usePriority(priority);
 
 	return (
@@ -18,7 +18,10 @@ const Project = memo(({ labels, title, priority, assignees, link }) => {
 		>
 			<div className={styles.projectInfo}>
 				<div className={styles.projectPriority}>{handleShowPriorityIcon}</div>
-				<div className={styles.projectTitle+(priority === 0 ? ' ' + styles.lineThrough : '')}>{title}</div>
+				<div className={styles.projectTitle+(priority === 0 ? ' ' + styles.lineThrough : '')}>
+					<div>{title}</div>
+					<div className={styles.projectUsage}>CPU: {cpu || '0%'} / MEM: {memPerc || '0%'}</div>
+				</div>
 			</div>
 			<span className={styles.hrLine}></span>
 			<div className={styles.projectSpecificInfo}>
@@ -54,6 +57,8 @@ const Project = memo(({ labels, title, priority, assignees, link }) => {
 Project.propTypes = {
 	labels: PropTypes.array,
 	title: PropTypes.string,
+	cpu: PropTypes.string,
+	memPerc: PropTypes.string,
 	priority: PropTypes.number,
 	assignees: PropTypes.array,
 	link: PropTypes.string,
