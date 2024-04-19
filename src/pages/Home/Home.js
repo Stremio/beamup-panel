@@ -41,7 +41,7 @@ export default function Home() {
 				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.hdd ? (serverUsage[0].hdd > 0.85 ? 'Red' : serverUsage[0].hdd > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
-						<div className={styles.serverUsageTitle}>HDD</div>
+						<div className={styles.serverUsageTitle}>Disk</div>
 						<div>{(serverUsage || [])[0]?.hdd ? (serverUsage[0].hdd * 100).toFixed(2) + '%' : '0.00%' }</div>
 					</div>
 				</div>
