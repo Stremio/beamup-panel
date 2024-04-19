@@ -183,11 +183,11 @@ let lastTime = 0
 
 function getProjects() {
     if (lastTime < Date.now() - config.projects_cache_time) {
-        // 'docker ps'
+        // 'docker service ls'
 
         return new Promise((resolve, reject) => {
             cp.exec(
-                `docker ps`,
+                `docker service ls`,
                 (err, stdout, stderr) => {
 
                     if (err) {
@@ -208,9 +208,12 @@ function getProjects() {
                         stdout.split(String.fromCharCode(10)).forEach((line, count) => {
                             if (count && line) { // ignore first line
                                 const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
-                                const name = parts[parts.length -1].split('.')[0].replace('beamup_', '')
-                                const status = deleting.includes(name) ? 'deleting' : parts[4].toLowerCase().startsWith('up') ? 'running' : 'failing'
-                                tempProjects.push({ name, status })
+                                const name = parts[1].split('.')[0].replace('beamup_', '')
+                                const replicas = parts[3] || ''
+                                const running = parseInt(parts[3].split('/')[0])
+                                const total = parseInt(parts[3].split('/')[1])
+                                const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
+                                tempProjects.push({ name, replicas, status })
                             }
                         })
 
