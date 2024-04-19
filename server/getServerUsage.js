@@ -17,4 +17,4 @@ const getServerUsage = () => {
 	})
 }
 
-module.exports = getServerUsage()
+module.exports = getServerUsage
