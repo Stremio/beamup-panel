@@ -213,19 +213,53 @@ function getProjects() {
                                 const running = parseInt(parts[3].split('/')[0])
                                 const total = parseInt(parts[3].split('/')[1])
                                 const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
-                                tempProjects.push({ name, status })
+                                tempProjects.push({ id: parts[0], replicas, name, status })
                             }
                         })
 
-                        projects = tempProjects
+                        cp.exec(
+                            `docker stats --no-stream`,
+                            (err, stdout, stderr) => {
+                                if (err) {
+                                    console.log(`err: ${err} ${err.message} ${err.toString()}`)
+                                    return resolve()
+                                }
 
-                        lastTime = Date.now()
+                                if (stderr) {
+                                    console.log('stderr')
+                                    console.log(stderr)
+                                    return resolve()
+                                }
 
-                        return resolve(projects)
+                                if (stdout) {
+                                    stdout.split(String.fromCharCode(10)).forEach((line, count) => {
+                                        if (count && line) { // ignore first line
+                                            const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
+                                            tempProjects.find((el, ij) => {
+                                                if (el.id === parts[0]) {
+                                                    tempProjects[ij].serviceId = parts[0]
+                                                    tempProjects[ij].cpu = parts[2]
+                                                    tempProjects[ij].memUsage = parts[3]
+                                                    tempProjects[ij].memPerc = parts[4]
+                                                    tempProjects[ij].netIO = parts[5]
+                                                    tempProjects[ij].blockIO = parts[6]
+                                                }
+                                            })
+                                        }
+                                    })
 
+                                    projects = tempProjects
+
+                                    lastTime = Date.now()
+
+                                    return resolve(projects)
+                                }
+
+                                return resolve()
+
+                            }
+                        )
                     }
-
-                    return resolve()
                 }
             )
         })
