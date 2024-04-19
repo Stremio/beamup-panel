@@ -20,25 +20,25 @@ export default function Home() {
 			/>
 			<div className={styles.serverUsage}>
 				<div className={styles.serverUsageName}>Server Status</div>
-				<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (serverUsage?.cpu ? (serverUsage.cpu > 0.85 ? 'Red' : serverUsage.cpu > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+				<div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.cpu ? (serverUsage[0].cpu > 0.85 ? 'Red' : serverUsage[0].cpu > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
 						<div className={styles.serverUsageTitle}>CPU</div>
 						<div>{serverUsage?.cpu ? (serverUsage.cpu * 100).toFixed(2) + '%' : '0.00%' }</div>
 					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (serverUsage?.mem ? (serverUsage.mem > 0.85 ? 'Red' : serverUsage.mem > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.mem ? (serverUsage[0].mem > 0.85 ? 'Red' : serverUsage[0].mem > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
 						<div className={styles.serverUsageTitle}>Mem</div>
 						<div>{serverUsage?.mem ? (serverUsage.mem * 100).toFixed(2) + '%' : '0.00%' }</div>
 					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (serverUsage?.swap ? (serverUsage.swap > 0.85 ? 'Red' : serverUsage.swap > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.swap ? (serverUsage[0].swap > 0.85 ? 'Red' : serverUsage[0].swap > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
 						<div className={styles.serverUsageTitle}>Swap</div>
 						<div>{serverUsage?.swap ? (serverUsage.swap * 100).toFixed(2) + '%' : '0.00%' }</div>
 					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (serverUsage?.hdd ? (serverUsage.hdd > 0.85 ? 'Red' : serverUsage.hdd > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.hdd ? (serverUsage[0].hdd > 0.85 ? 'Red' : serverUsage[0].hdd > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
 						<div className={styles.serverUsageTitle}>HDD</div>
