@@ -32,3 +32,60 @@
 		}
 	}
 }
+
+.serverUsage {
+	margin: 0;
+	padding: 0;
+	border-radius: 5px;
+	box-shadow: 0 0 10px #0000001a;
+	overflow: hidden;
+
+	.serverUsageHeader {
+		padding: 10px;
+		text-align: center;
+		border-bottom: 1px solid silver;
+	}
+
+	.serverUsageTab {
+		display: inline-block;
+		position: relative;
+		width: 25%;
+		margin: 0;
+		padding: 0;
+		border-bottom: 10px solid silver;
+
+		.sameHeight {
+			margin-top: 100%;
+		}
+
+		.serverUsageElement {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			text-align: center;
+			padding: 10px;
+
+			.serverUsageTitle {
+				margin-bottom: 30px;
+			}
+		}
+	}
+
+	.serverUsageRed {
+		border-bottom: 10px solid #F24E1E;
+	}
+
+	.serverUsageYellow {
+		border-bottom: 10px solid #FFB627;
+	}
+
+	.serverUsageGreen {
+		border-bottom: 10px solid #32E19E;
+	}
+
+	.serverUsageGray {
+		border-bottom: 10px solid silver;
+	}
+}

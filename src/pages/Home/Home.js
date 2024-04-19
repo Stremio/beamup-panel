@@ -5,7 +5,7 @@ import { LoadingProjects } from './loadingStates';
 import styles from './styles.module.scss';
 
 export default function Home() {
-	const { projects } = useApi();
+	const { projects, serverUsage } = useApi();
 
 	// --> Sorting
 	const SortingOptions = useSortingArray();
@@ -18,6 +18,34 @@ export default function Home() {
 				projectsCount={projects.length}
 				failingProjects={projects.filter(proj => proj.status !== 'running').length}
 			/>
+			<div className={styles.serverUsage}>
+				<div className={styles.serverUsageName}>Server Status</div>
+				<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (serverUsage?.cpu ? (serverUsage.cpu > 0.85 ? 'Red' : serverUsage.cpu > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+					<div className={styles.sameHeight}></div>
+					<div className={styles.serverUsageElement}>
+						<div className={styles.serverUsageTitle}>CPU</div>
+						<div>{serverUsage?.cpu ? (serverUsage.cpu * 100).toFixed(2) + '%' : '0.00%' }</div>
+					</div>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (serverUsage?.mem ? (serverUsage.mem > 0.85 ? 'Red' : serverUsage.mem > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+					<div className={styles.sameHeight}></div>
+					<div className={styles.serverUsageElement}>
+						<div className={styles.serverUsageTitle}>Mem</div>
+						<div>{serverUsage?.mem ? (serverUsage.mem * 100).toFixed(2) + '%' : '0.00%' }</div>
+					</div>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (serverUsage?.swap ? (serverUsage.swap > 0.85 ? 'Red' : serverUsage.swap > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+					<div className={styles.sameHeight}></div>
+					<div className={styles.serverUsageElement}>
+						<div className={styles.serverUsageTitle}>Swap</div>
+						<div>{serverUsage?.swap ? (serverUsage.swap * 100).toFixed(2) + '%' : '0.00%' }</div>
+					</div>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (serverUsage?.hdd ? (serverUsage.hdd > 0.85 ? 'Red' : serverUsage.hdd > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+					<div className={styles.sameHeight}></div>
+					<div className={styles.serverUsageElement}>
+						<div className={styles.serverUsageTitle}>HDD</div>
+						<div>{serverUsage?.hdd ? (serverUsage.hdd * 100).toFixed(2) + '%' : '0.00%' }</div>
+					</div>
+				</div>
+			</div>
 			<div className={styles.tasksContainer}>
 				<div className={styles.tasksInfoWrapper}>
 					<div className={styles.tasksInfo}>

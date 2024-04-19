@@ -4,10 +4,13 @@ const FormData = require("form-data");
 const fetch = require("node-fetch");
 const cookieSession = require('cookie-session')
 const cp = require('child_process')
+const fs = require('fs')
 const { client_id, client_secret } = require("./config");
 const githubRestApi = require('./githubRestApi')
 const sessions = require('./sessions')
 const slack = require('./slack')
+
+const getServerUsage = require('./getServerUsage')
 
 const config = require("./config");
 
@@ -77,6 +80,25 @@ app.get('/getProjects', protected, async (req, res) => {
         return res.status(500).json({ errMessage: (e || {}).message || 'Unknown Error' });
     }
 });
+
+app.get('/getServerUsage', protected, async (req, res) => {
+    let serverUsageHistory = []
+    try {
+        serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
+    } catch(e) {}
+    if (!serverUsageHistory.length) {
+        serverUsageHistory = [
+            {
+                mem: 0,
+                swap: 0,
+                cpu: 0,
+                hdd: 0,
+                timestamp: Date.now(),
+            }
+        ]
+    }
+    return res.status(200).json(serverUsageHistory)
+})
 
 function userHasProject(login, proj) {
     return login && proj && proj.startsWith(getUserHash(login)+'-') && projects.find(el => el.name === proj)
@@ -339,3 +361,25 @@ const PORT = process.env.SERVER_PORT || process.env.REACT_APP_SERVER_PORT || 500
 app.listen(PORT, () => {
     console.log(`BeamUp Panel running at http://localhost:${PORT}`);
 });
+
+const sessionsFolder = config.sessions_folder || '../'
+
+const logServerUsage = async () => {
+    let serverUsageHistory = []
+    try {
+        serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
+    } catch(e) {}
+    const serverUsage = await getServerUsage()
+    serverUsage.timestamp = Date.now()
+    serverUsageHistory.unshift(serverUsage)
+    const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.server_usage_interval) * config.server_usage_history_days
+    if (serverUsageHistory.length > maxEntries) {
+        serverUsageHistory = serverUsageHistory.slice(0, maxEntries)
+    }
+    fs.writeFileSync(sessionsFolder + 'server_usage_history.json', JSON.stringify(serverUsageHistory))
+    setTimeout(() => {
+        logServerUsage()
+    }, config.server_usage_interval)
+}
+
+logServerUsage()

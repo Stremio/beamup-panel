@@ -18,16 +18,19 @@ const request = async (path) => {
 
 const getUserInfo = () => request('/getUserInfo');
 const getProjects = () => request('/getProjects');
+const getServerUsage = () => request('/getServerUsage');
 
 const ApiProvider = ({ children, onAuthError }) => {
 	const [user, setUser] = useState({});
 	const [projects, setProjects] = useState([]);
+	const [serverUsage, setServerUsage] = useState([]);
 
 	const initializeApi = async () => {
 		getUserInfo()
 			.then(setUser)
 			.catch(onAuthError);
 		getProjects().then(setProjects);
+		getServerUsage().then(setServerUsage);
 	};
 
 	useEffect(() => {
@@ -35,7 +38,7 @@ const ApiProvider = ({ children, onAuthError }) => {
 	}, []);
 
 	return (
-		<ApiContext.Provider value={{ user, projects }}>
+		<ApiContext.Provider value={{ user, projects, serverUsage }}>
 			{ children }
 		</ApiContext.Provider>
 	);
