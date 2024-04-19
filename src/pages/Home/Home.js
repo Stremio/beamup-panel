@@ -19,7 +19,7 @@ export default function Home() {
 				failingProjects={projects.filter(proj => proj.status !== 'running').length}
 			/>
 			<div className={styles.serverUsage}>
-				<div className={styles.serverUsageName}>Server Status</div>
+				<div className={styles.serverUsageHeader}>Server Status</div>
 				<div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.cpu ? (serverUsage[0].cpu > 0.85 ? 'Red' : serverUsage[0].cpu > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
