@@ -235,8 +235,9 @@ function getProjects() {
                                     stdout.split(String.fromCharCode(10)).forEach((line, count) => {
                                         if (count && line) { // ignore first line
                                             const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
+                                            const name = parts[1].split('.')[0].replace('beamup_', '')
                                             tempProjects.find((el, ij) => {
-                                                if (el.id === parts[0]) {
+                                                if (el.name === name) {
                                                     tempProjects[ij].serviceId = parts[0]
                                                     tempProjects[ij].cpu = parts[2]
                                                     tempProjects[ij].memUsage = parts[3]
