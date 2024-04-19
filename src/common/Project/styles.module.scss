@@ -98,16 +98,16 @@
             }
 
             &.restart {
-                background: black;
+                background: #313339;
                 color: white;
-                border: 2px solid black;
+                border: 2px solid #313339;
                 opacity: 0.6;
             }
             
             &.delete {
-                background: black;
+                background: #313339;
                 color: white;
-                border: 2px solid black;
+                border: 2px solid #313339;
                 opacity: 0.6;
                 &:hover {
                     color: #FF0000;
@@ -117,16 +117,16 @@
             }
 
             &.see-logs {
-                background: black;
+                background: #313339;
                 color: white;
-                border: 2px solid black;
+                border: 2px solid #313339;
                 opacity: 0.6;
             }
             
             &:hover {
-                color: black;
+                color: #313339;
                 background: transparent;
-                border: 2px solid black;
+                border: 2px solid #313339;
                 opacity: 0.5;
             }
         }
