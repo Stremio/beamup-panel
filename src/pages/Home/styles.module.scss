@@ -39,6 +39,7 @@
 	border-radius: 5px;
 	box-shadow: 0 0 10px #0000001a;
 	overflow: hidden;
+	background-color: white;
 
 	.serverUsageHeader {
 		padding: 10px;
@@ -68,7 +69,7 @@
 			padding: 10px;
 
 			.serverUsageTitle {
-				margin-bottom: 30px;
+				margin-bottom: 15px;
 			}
 		}
 	}
