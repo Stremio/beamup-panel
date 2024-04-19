@@ -19,7 +19,7 @@ function getCPUInfo(callback){
         idle += cpus[cpu].times.idle;
     }
     
-    const total = user + nice + sys + idle + irq;
+    total = user + nice + sys + idle + irq;
     
     return {
         'idle': idle,
