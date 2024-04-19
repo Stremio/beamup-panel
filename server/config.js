@@ -27,6 +27,8 @@ const envVarsSchema = Joi.object({
   session_expire: Joi.number().required(),
   session_refresh_interval: Joi.number().required(),
   sessions_folder: Joi.string().required(),
+  server_usage_interval: Joi.number().required(),
+  server_usage_history_days: Joi.number().required(),
 });
 
 const { error } = envVarsSchema.validate(config);
