@@ -213,7 +213,7 @@ function getProjects() {
                                 const running = parseInt(parts[3].split('/')[0])
                                 const total = parseInt(parts[3].split('/')[1])
                                 const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
-                                tempProjects.push({ name, replicas, status })
+                                tempProjects.push({ name, status })
                             }
                         })
 
