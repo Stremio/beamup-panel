@@ -3,9 +3,11 @@ import { Project, UserProfile, DropdownMenu, useApi } from '../../common';
 import { useSortingArray, useSortedProjects } from './hooks';
 import { LoadingProjects } from './loadingStates';
 import styles from './styles.module.scss';
+import { hoverAnimation } from '../../animations';
+import { motion } from 'framer-motion';
 
 export default function Home() {
-	const { projects, serverUsage } = useApi();
+	const { projects, lastServerUsage } = useApi();
 
 	// --> Sorting
 	const SortingOptions = useSortingArray();
@@ -18,34 +20,41 @@ export default function Home() {
 				projectsCount={projects.length}
 				failingProjects={projects.filter(proj => proj.status !== 'running').length}
 			/>
-			<div className={styles.serverUsage}>
+			<motion.a
+				className={styles.serverUsage}
+				as={motion.a}
+				whileHover={hoverAnimation}
+				href={'/server_usage'}
+				target={'_blank'}
+				rel="noopener noreferrer"
+				>
 				<div className={styles.serverUsageHeader}>Server Status</div>
-				<div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.cpu ? (serverUsage[0].cpu > 0.85 ? 'Red' : serverUsage[0].cpu > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+				<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.cpu ? (lastServerUsage.cpu > 0.9 ? 'Red' : lastServerUsage.cpu > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
 						<div className={styles.serverUsageTitle}>CPU</div>
-						<div>{(serverUsage || [])[0]?.cpu ? (serverUsage[0].cpu * 100).toFixed(2) + '%' : '0.00%' }</div>
+						<div>{lastServerUsage?.cpu ? (lastServerUsage.cpu * 100).toFixed(2) + '%' : '0.00%' }</div>
 					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.mem ? (serverUsage[0].mem > 0.85 ? 'Red' : serverUsage[0].mem > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.mem ? (lastServerUsage.mem > 0.9 ? 'Red' : lastServerUsage.mem > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
 						<div className={styles.serverUsageTitle}>Mem</div>
-						<div>{(serverUsage || [])[0]?.mem ? (serverUsage[0].mem * 100).toFixed(2) + '%' : '0.00%' }</div>
+						<div>{lastServerUsage?.mem ? (lastServerUsage.mem * 100).toFixed(2) + '%' : '0.00%' }</div>
 					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.swap ? (serverUsage[0].swap > 0.85 ? 'Red' : serverUsage[0].swap > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.swap ? (lastServerUsage.swap > 0.9 ? 'Red' : lastServerUsage.swap > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
 						<div className={styles.serverUsageTitle}>Swap</div>
-						<div>{(serverUsage || [])[0]?.swap ? (serverUsage[0].swap * 100).toFixed(2) + '%' : '0.00%' }</div>
+						<div>{lastServerUsage?.swap ? (lastServerUsage.swap * 100).toFixed(2) + '%' : '0.00%' }</div>
 					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + ((serverUsage || [])[0]?.hdd ? (serverUsage[0].hdd > 0.85 ? 'Red' : serverUsage[0].hdd > 0.70 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.hdd ? (lastServerUsage.hdd > 0.9 ? 'Red' : lastServerUsage.hdd > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
 						<div className={styles.serverUsageTitle}>Disk</div>
-						<div>{(serverUsage || [])[0]?.hdd ? (serverUsage[0].hdd * 100).toFixed(2) + '%' : '0.00%' }</div>
+						<div>{lastServerUsage?.hdd ? (lastServerUsage.hdd * 100).toFixed(2) + '%' : '0.00%' }</div>
 					</div>
 				</div>
-			</div>
+			</motion.a>
 			<div className={styles.tasksContainer}>
 				<div className={styles.tasksInfoWrapper}>
 					<div className={styles.tasksInfo}>

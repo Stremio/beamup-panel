@@ -1,5 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { Root, Home, Auth, Warn, AfterDelete } from './pages';
+import { Root, Home, Auth, ServerUsage, Warn, AfterDelete } from './pages';
 import { ErrorPage } from './ErrorPage';
 
 export const router = createBrowserRouter([
@@ -16,6 +16,11 @@ export const router = createBrowserRouter([
 			{
 				index: true,
 				element: <Home/>,
+				error: <ErrorPage />,
+			},
+			{
+				path: '/server_usage',
+				element: <ServerUsage />,
 				error: <ErrorPage />,
 			},
 			{

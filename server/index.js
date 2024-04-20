@@ -81,7 +81,13 @@ app.get('/getProjects', protected, async (req, res) => {
     }
 });
 
-app.get('/getServerUsage', protected, async (req, res) => {
+let lastServerUsage = {}
+
+app.get('/getLastServerUsage', protected, async (req, res) => {
+    return res.status(200).json(lastServerUsage)
+})
+
+app.get('/getServerUsage', async (req, res) => {
     let serverUsageHistory = []
     try {
         serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
@@ -371,6 +377,7 @@ const logServerUsage = async () => {
     } catch(e) {}
     const serverUsage = await getServerUsage()
     serverUsage.timestamp = Date.now()
+    lastServerUsage = serverUsage
     serverUsageHistory.unshift(serverUsage)
     const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.server_usage_interval) * config.server_usage_history_days
     if (serverUsageHistory.length > maxEntries) {
