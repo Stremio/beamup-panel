@@ -218,7 +218,7 @@ export default function ProjectUsage() {
 								<div className={styles.blockContainer} title={'Click for details'} onClick={showDetailed.bind(null, dayIdx)}>
 								{
 									data.usage.map((usage, index) => (
-										<div key={data.day+index}className={`${styles.miniBlock} ${styles['miniBlock' + (usage.status === 'failing' ? '' : (usage?.cpu && usage.cpu > 0.9) || (usage?.mem && usage.mem > 0.9) ? 'Red' : (usage?.cpu && usage.cpu > 0.8) || (usage?.mem && usage.mem > 0.8) ? 'Yellow' : usage?.cpu && usage?.mem ? 'Green' : '') ]}`} />
+										<div key={data.day+index}className={`${styles.miniBlock} ${styles['miniBlock' + (usage.status === 'failing' || usage.status === 'deleting' ? '' : (usage?.cpu && usage.cpu > 0.9) || (usage?.mem && usage.mem > 0.9) ? 'Red' : (usage?.cpu && usage.cpu > 0.8) || (usage?.mem && usage.mem > 0.8) ? 'Yellow' : usage?.cpu && usage?.mem ? 'Green' : '') ]}`} />
 									))
 								}
 								</div>
