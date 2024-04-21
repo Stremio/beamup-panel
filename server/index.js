@@ -182,11 +182,6 @@ app.get('/doDelete', protected, async (req, res) => {
             }
         });
         slack.say(`${req.query.domain}: project ${proj} was requested for deletion`)
-        // 'docker service update' takes a long time, we should not wait
-        cp.exec(
-            `docker service update --force --entrypoint "/bin/bash -c 'python -m http.server -d /dev/null \\$PORT' || echo" beamup_${proj}`,
-            (err, stdout, stderr) => {}
-        );
         return res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
