@@ -182,10 +182,6 @@ app.get('/doDelete', protected, async (req, res) => {
             }
         });
         slack.say(`${req.query.domain}: project ${proj} was requested for deletion`)
-        cp.exec(
-            `docker service rm beamup_${proj}`,
-            (err, stdout, stderr) => {}
-        );
         return res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
