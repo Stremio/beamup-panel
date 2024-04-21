@@ -140,7 +140,7 @@ export default function ProjectUsage() {
 				<a href={'/'} className={styles.titleHref}><h1 className={styles.heading}>BeamUp</h1></a>
 				<div className={styles.pageTitle}>
 					{title}
-					<div className={`${styles.projectState} ${styles['projectState' + (lastProjectUsage.hasOwnProperty('status') ? (lastProjectUsage.status === 'failing' ? 'Red' : lastProjectUsage.status === 'running' ? 'Green' : 'Gray') : 'Gray') ]}`}>{lastProjectUsage.status || 'unknown'}</div>
+					<div className={`${styles.projectState} ${styles['projectState' + (lastProjectUsage.hasOwnProperty('status') ? (lastProjectUsage.status === 'failing' || lastProjectUsage.status === 'deleting' ? 'Red' : lastProjectUsage.status === 'running' ? 'Green' : 'Gray') : 'Gray') ]}`}>{lastProjectUsage.status || 'unknown'}</div>
 				</div>
 				{
 					Array.isArray(labels) && labels.length > 0 ? (
