@@ -47,7 +47,7 @@ export default function Home() {
 						<div className={styles.serverUsageTitle}>Swap</div>
 						<div>{lastServerUsage?.swap ? (lastServerUsage.swap * 100).toFixed(2) + '%' : '0.00%' }</div>
 					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.hdd ? (lastServerUsage.hdd > 0.9 ? 'Red' : lastServerUsage.hdd > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.hdd ? (lastServerUsage.hdd > 0.93 ? 'Red' : lastServerUsage.hdd > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
 					<div className={styles.serverUsageElement}>
 						<div className={styles.serverUsageTitle}>Disk</div>

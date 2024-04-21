@@ -62,8 +62,8 @@ export default function ServerUsage() {
 		let obj = {}
 		for (var i = 0; data.usage[i]; i++) {
 			const usage = data.usage[i]
-			const isDanger = usage?.cpu > 0.9 || usage?.mem > 0.9 || usage?.swap > 0.9 || usage?.hdd > 0.9
-			const isWarning = usage?.cpu > 0.8 || usage?.mem > 0.8 || usage?.swap > 0.8 || usage?.hdd > 0.8
+			const isDanger = usage?.cpu > 0.9 || usage?.mem > 0.9 || usage?.swap > 0.9 || usage?.hdd > 0.93
+			const isWarning = usage?.cpu > 0.8 || usage?.mem > 0.8 || usage?.swap > 0.8 || usage?.hdd > 0.84
 			const state = isDanger ? 'Red' : isWarning ? 'Yellow' : 'Green'
 			if (obj.state === state) {
 				obj.startTime = usage.timestamp
@@ -133,7 +133,7 @@ export default function ServerUsage() {
 							<div className={styles.serverUsageTitle}>Swap</div>
 							<div>{lastServerUsage?.swap ? (lastServerUsage.swap * 100).toFixed(2) + '%' : '0.00%' }</div>
 						</div>
-					</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.hdd ? (lastServerUsage.hdd > 0.9 ? 'Red' : lastServerUsage.hdd > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+					</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.hdd ? (lastServerUsage.hdd > 0.93 ? 'Red' : lastServerUsage.hdd > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 						<div className={styles.sameHeight}></div>
 						<div className={styles.serverUsageElement}>
 							<div className={styles.serverUsageTitle}>Disk</div>
@@ -150,7 +150,7 @@ export default function ServerUsage() {
 								<div className={styles.blockContainer} title={'Click for details'} onClick={showDetailed.bind(null, dayIdx)}>
 								{
 									data.usage.map((usage, index) => (
-										<div key={data.day+index}className={`${styles.miniBlock} ${styles['miniBlock' + ((usage?.cpu && usage.cpu > 0.9) || (usage?.mem && usage.mem > 0.9) || (usage?.hdd && usage.hdd > 0.9) ? 'Red' : (usage?.cpu && usage.cpu > 0.8) || (usage?.mem && usage.mem > 0.8) || (usage?.hdd && usage.hdd > 0.8) ? 'Yellow' : usage?.cpu && usage?.mem && usage?.hdd ? 'Green' : '') ]}`} />
+										<div key={data.day+index}className={`${styles.miniBlock} ${styles['miniBlock' + ((usage?.cpu && usage.cpu > 0.9) || (usage?.mem && usage.mem > 0.9) || (usage?.hdd && usage.hdd > 0.93) ? 'Red' : (usage?.cpu && usage.cpu > 0.8) || (usage?.mem && usage.mem > 0.8) || (usage?.hdd && usage.hdd > 0.84) ? 'Yellow' : usage?.cpu && usage?.mem && usage?.hdd ? 'Green' : '') ]}`} />
 									))
 								}
 								</div>
