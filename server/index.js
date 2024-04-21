@@ -398,20 +398,23 @@ app.listen(PORT, () => {
 
 const sessionsFolder = config.sessions_folder || '../'
 
-const logServerUsage = async () => {
-    let serverUsageHistory = []
-    try {
-        serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
-    } catch(e) {}
-    const serverUsage = await getServerUsage()
-    serverUsage.timestamp = Date.now()
-    lastServerUsage = serverUsage
-    serverUsageHistory.unshift(serverUsage)
-    const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.server_usage_interval) * config.server_usage_history_days
-    if (serverUsageHistory.length > maxEntries) {
-        serverUsageHistory = serverUsageHistory.slice(0, maxEntries)
+const logServerUsage = () => {
+    async function updateServerUsage() {
+        let serverUsageHistory = []
+        try {
+            serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
+        } catch(e) {}
+        const serverUsage = await getServerUsage()
+        serverUsage.timestamp = Date.now()
+        lastServerUsage = serverUsage
+        serverUsageHistory.unshift(serverUsage)
+        const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.server_usage_interval) * config.server_usage_history_days
+        if (serverUsageHistory.length > maxEntries) {
+            serverUsageHistory = serverUsageHistory.slice(0, maxEntries)
+        }
+        fs.writeFileSync(sessionsFolder + 'server_usage_history.json', JSON.stringify(serverUsageHistory))
     }
-    fs.writeFileSync(sessionsFolder + 'server_usage_history.json', JSON.stringify(serverUsageHistory))
+    updateServerUsage()
     setTimeout(() => {
         logServerUsage()
     }, config.server_usage_interval)
@@ -419,25 +422,28 @@ const logServerUsage = async () => {
 
 logServerUsage()
 
-const logProjectUsage = async () => {
-    let projectUsageHistory = []
-    try {
-        projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
-    } catch(e) {}
-    try {
-        await getProjects()
-    } catch (e) {
-        return res.status(500).json({ errMessage: (e || {}).message || 'Unknown Error' });
+const logProjectUsage = () => {
+    async function updateProjectUsage() {
+        let projectUsageHistory = []
+        try {
+            projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
+        } catch(e) {}
+        try {
+            await getProjects()
+        } catch (e) {
+            return res.status(500).json({ errMessage: (e || {}).message || 'Unknown Error' });
+        }
+        projectUsageHistory.unshift({
+            timestamp: Date.now(),
+            snapshot: projects,
+        })
+        const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.project_usage_interval) * config.project_usage_history_days
+        if (projectUsageHistory.length > maxEntries) {
+            projectUsageHistory = projectUsageHistory.slice(0, maxEntries)
+        }
+        fs.writeFileSync(sessionsFolder + 'project_usage_history.json', JSON.stringify(projectUsageHistory))
     }
-    projectUsageHistory.unshift({
-        timestamp: Date.now(),
-        snapshot: projects,
-    })
-    const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.project_usage_interval) * config.project_usage_history_days
-    if (projectUsageHistory.length > maxEntries) {
-        projectUsageHistory = projectUsageHistory.slice(0, maxEntries)
-    }
-    fs.writeFileSync(sessionsFolder + 'project_usage_history.json', JSON.stringify(projectUsageHistory))
+    updateProjectUsage()
     setTimeout(() => {
         logProjectUsage()
     }, config.project_usage_interval)
