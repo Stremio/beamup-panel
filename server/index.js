@@ -106,6 +106,34 @@ app.get('/getServerUsage', async (req, res) => {
     return res.status(200).json(serverUsageHistory)
 })
 
+app.get('/getProjectUsage', protected, async (req, res) => {
+    const login = res.locals.userData.login;
+    const proj = req.query.proj;
+    if (userHasProject(login, proj)) {
+        let projectUsageHistory = []
+        try {
+            projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
+        } catch(e) {}
+        if (!projectUsageHistory.length) {
+            return res.status(500).json({ errMessage: 'No items in history' })
+        }
+        const projectUsage = []
+        projectUsageHistory.forEach(hist => {
+            const projs = hist?.snapshot || []
+            projs.find(el => {
+                if (el.name === proj) {
+                    el.timestamp = hist.timestamp
+                    projectUsage.push(el)
+                    return true
+                }
+            })
+        })
+        return res.status(200).json(projectUsage)
+    } else {
+        return res.status(500).json({ errMessage: 'You do not have access to this project' });
+    }
+})
+
 function userHasProject(login, proj) {
     return login && proj && proj.startsWith(getUserHash(login)+'-') && projects.find(el => el.name === proj)
 }
@@ -390,3 +418,30 @@ const logServerUsage = async () => {
 }
 
 logServerUsage()
+
+const logProjectUsage = async () => {
+    let projectUsageHistory = []
+    try {
+        projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
+    } catch(e) {}
+    try {
+        await getProjects()
+    } catch (e) {
+        return res.status(500).json({ errMessage: (e || {}).message || 'Unknown Error' });
+    }
+    projectUsageHistory.unshift({
+        timestamp: Date.now(),
+        snapshot: projects,
+    })
+    const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.project_usage_interval) * config.project_usage_history_days
+    if (projectUsageHistory.length > maxEntries) {
+        projectUsageHistory = projectUsageHistory.slice(0, maxEntries)
+    }
+    fs.writeFileSync(sessionsFolder + 'project_usage_history.json', JSON.stringify(projectUsageHistory))
+    setTimeout(() => {
+        logProjectUsage()
+    }, config.project_usage_interval)
+}
+
+logProjectUsage()
+

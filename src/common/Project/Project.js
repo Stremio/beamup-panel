@@ -18,10 +18,10 @@ const Project = memo(({ labels, title, cpu, memPerc, priority, assignees, link }
 		>
 			<div className={styles.projectInfo}>
 				<div className={styles.projectPriority}>{handleShowPriorityIcon}</div>
-				<div className={styles.projectTitle+(priority === 0 ? ' ' + styles.lineThrough : '')}>
+				<a href={`/project_usage?proj=${encodeURIComponent(title)}`} className={styles.projectTitle+(priority === 0 ? ' ' + styles.lineThrough : '')}>
 					<div>{title}</div>
 					<div className={styles.projectUsage}>CPU: {cpu || '0%'} / MEM: {memPerc || '0%'}</div>
-				</div>
+				</a>
 			</div>
 			<span className={styles.hrLine}></span>
 			<div className={styles.projectSpecificInfo}>

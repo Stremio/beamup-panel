@@ -1,5 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { Root, Home, Auth, ServerUsage, Warn, AfterDelete } from './pages';
+import { Root, Home, Auth, ServerUsage, ProjectUsage, Warn, AfterDelete } from './pages';
 import { ErrorPage } from './ErrorPage';
 
 export const router = createBrowserRouter([
@@ -21,6 +21,11 @@ export const router = createBrowserRouter([
 			{
 				path: '/server_usage',
 				element: <ServerUsage />,
+				error: <ErrorPage />,
+			},
+			{
+				path: '/project_usage',
+				element: <ProjectUsage />,
 				error: <ErrorPage />,
 			},
 			{

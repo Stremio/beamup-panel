@@ -20,6 +20,7 @@ const getUserInfo = () => request('/getUserInfo');
 const getProjects = () => request('/getProjects');
 const getLastServerUsage = () => request('/getLastServerUsage');
 const getServerUsage = () => request('/getServerUsage');
+const getProjectUsage = (proj) => request('/getProjectUsage?proj=' + encodeURIComponent(proj));
 
 const ApiProvider = ({ children, onAuthError }) => {
 	const [user, setUser] = useState({});
@@ -82,9 +83,39 @@ const useServerUsage = () => {
 	return useContext(ServerUsageContext);
 };
 
+const ProjectUsageContext = createContext();
+
+const ProjectUsageProvider = ({ children }) => {
+	const [projectUsage, setProjectUsage] = useState([]);
+
+	const initializeApi = async () => {
+		getProjectUsage((new URLSearchParams(window.location.search)).get('proj')).then(setProjectUsage);
+	};
+
+	useEffect(() => {
+		initializeApi();
+	}, []);
+
+	return (
+		<ProjectUsageContext.Provider value={{ projectUsage }}>
+			{ children }
+		</ProjectUsageContext.Provider>
+	);
+}
+
+ProjectUsageProvider.propTypes = {
+	children: PropTypes.node.isRequired,
+};
+
+const useProjectUsage = () => {
+	return useContext(ProjectUsageContext);
+};
+
 export {
 	ApiProvider,
 	useApi,
 	ServerUsageProvider,
-	useServerUsage
+	useServerUsage,
+	ProjectUsageProvider,
+	useProjectUsage
 };
