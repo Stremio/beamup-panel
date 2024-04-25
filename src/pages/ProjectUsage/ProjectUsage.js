@@ -91,8 +91,8 @@ export default function ProjectUsage() {
 		let obj = {}
 		for (var i = 0; data.usage[i]; i++) {
 			const usage = data.usage[i]
-			const isDanger = usage?.cpu > 0.9 || usage?.mem > 0.9
-			const isWarning = usage?.cpu > 0.8 || usage?.mem > 0.8
+			const isDanger = usage?.cpu > 0.93 || usage?.mem > 0.9
+			const isWarning = usage?.cpu > 0.84 || usage?.mem > 0.8
 			const state = isDanger ? 'Red' : isWarning ? 'Yellow' : 'Green'
 			if (obj.state === state) {
 				obj.startTime = usage.timestamp
@@ -165,7 +165,7 @@ export default function ProjectUsage() {
 				}
 				<div className={styles.serverUsage}>
 					<div className={styles.serverUsageHeader}>Current Status</div>
-					<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastProjectUsage.hasOwnProperty('cpu') ? (lastProjectUsage.cpu > 0.9 ? 'Red' : lastProjectUsage.cpu > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+					<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastProjectUsage.hasOwnProperty('cpu') ? (lastProjectUsage.cpu > 0.93 ? 'Red' : lastProjectUsage.cpu > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 						<div className={styles.halfHeight}></div>
 						<div className={styles.serverUsageElement}>
 							<div className={styles.serverUsageTitle}>CPU</div>
@@ -220,7 +220,7 @@ export default function ProjectUsage() {
 								<div className={styles.blockContainer} title={'Click for details'} onClick={showDetailed.bind(null, dayIdx)}>
 								{
 									data.usage.map((usage, index) => (
-										<div key={data.day+index}className={`${styles.miniBlock} ${styles['miniBlock' + (usage.status === 'failing' || usage.status === 'deleting' ? '' : (usage?.cpu && usage.cpu > 0.9) || (usage?.mem && usage.mem > 0.9) ? 'Red' : (usage?.cpu && usage.cpu > 0.8) || (usage?.mem && usage.mem > 0.8) ? 'Yellow' : usage?.mem ? 'Green' : '') ]}`} />
+										<div key={data.day+index}className={`${styles.miniBlock} ${styles['miniBlock' + (usage.status === 'failing' || usage.status === 'deleting' ? '' : (usage?.cpu && usage.cpu > 0.93) || (usage?.mem && usage.mem > 0.9) ? 'Red' : (usage?.cpu && usage.cpu > 0.84) || (usage?.mem && usage.mem > 0.8) ? 'Yellow' : usage?.mem ? 'Green' : '') ]}`} />
 									))
 								}
 								</div>
