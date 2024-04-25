@@ -134,6 +134,8 @@ export default function ProjectUsage() {
 
 	const labels = [{ id: '1', name: 'See Logs' }, { id: '2', name: 'Restart' }, { id: '3', name: 'Delete' }]
 
+	const maxDays = 3
+
 	return (
 		<section className={styles.statsWrapper}>
 			<div className={styles.tasksContainer}>
@@ -209,10 +211,10 @@ export default function ProjectUsage() {
 						</div>
 					</div>
 				</div>
-				<div className={styles.historyTitle}>3 Day History</div>
+				<div className={styles.historyTitle}>{maxDays} Day History</div>
 				{
 					(
-						days.map((data, dayIdx) => (
+						days.slice(0, maxDays).map((data, dayIdx) => (
 							<div className={styles.dayContainer}>
 								<div className={styles.blockTitle}>{data.day}</div>
 								<div className={styles.blockContainer} title={'Click for details'} onClick={showDetailed.bind(null, dayIdx)}>
