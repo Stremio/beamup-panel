@@ -225,16 +225,19 @@ export default function ProjectUsage() {
 								}
 								</div>
 								{
-									daysDetailed[dayIdx].parts.map((detailed, partIdx) => (
-										<div className={styles.detailed}>
-											<div className={`${styles.hourTitle} ${styles['hourTitle' + detailed.state]}`}>
-												{getTime(detailed.startTime, 'Hours')+':'+getTime(detailed.startTime, 'Minutes')+':'+getTime(detailed.startTime, 'Seconds')+(detailed.startTime !== detailed.endTime ? ' -> '+getTime(detailed.endTime, 'Hours')+':'+getTime(detailed.endTime, 'Minutes')+':'+getTime(detailed.endTime, 'Seconds') : '')}
+									!daysDetailed[dayIdx].parts.length ? 
+										<div className={styles.resourcesLine}>No incidents for this day</div>
+									:
+										daysDetailed[dayIdx].parts.map((detailed, partIdx) => (
+											<div className={styles.detailed}>
+												<div className={`${styles.hourTitle} ${styles['hourTitle' + detailed.state]}`}>
+													{getTime(detailed.startTime, 'Hours')+':'+getTime(detailed.startTime, 'Minutes')+':'+getTime(detailed.startTime, 'Seconds')+(detailed.startTime !== detailed.endTime ? ' -> '+getTime(detailed.endTime, 'Hours')+':'+getTime(detailed.endTime, 'Minutes')+':'+getTime(detailed.endTime, 'Seconds') : '')}
+												</div>
+												<div className={styles.resourcesLine}>
+													<div className={styles.twoBoxes}>CPU: {(detailed.minCpu * 100).toFixed(2)+(detailed.minCpu !== detailed.maxCpu ? '-'+(detailed.maxCpu * 100).toFixed(2) : '')+'%'}</div><div className={styles.twoBoxes}>Mem: {(detailed.minMem * 100).toFixed(2)+(detailed.minMem !== detailed.maxMem ? '-'+(detailed.maxMem * 100).toFixed(2) : '')+'%'}</div>
+												</div>
 											</div>
-											<div className={styles.resourcesLine}>
-												<div className={styles.twoBoxes}>CPU: {(detailed.minCpu * 100).toFixed(2)+(detailed.minCpu !== detailed.maxCpu ? '-'+(detailed.maxCpu * 100).toFixed(2) : '')+'%'}</div><div className={styles.twoBoxes}>Mem: {(detailed.minMem * 100).toFixed(2)+(detailed.minMem !== detailed.maxMem ? '-'+(detailed.maxMem * 100).toFixed(2) : '')+'%'}</div>
-											</div>
-										</div>
-									))
+										))
 								}
 							</div>
 						))

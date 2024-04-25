@@ -155,16 +155,19 @@ export default function ServerUsage() {
 								}
 								</div>
 								{
-									daysDetailed[dayIdx].parts.map((detailed, partIdx) => (
-										<div className={styles.detailed}>
-											<div className={`${styles.hourTitle} ${styles['hourTitle' + detailed.state]}`}>
-												{getTime(detailed.startTime, 'Hours')+':'+getTime(detailed.startTime, 'Minutes')+':'+getTime(detailed.startTime, 'Seconds')+(detailed.startTime !== detailed.endTime ? ' -> '+getTime(detailed.endTime, 'Hours')+':'+getTime(detailed.endTime, 'Minutes')+':'+getTime(detailed.endTime, 'Seconds') : '')}
+									!daysDetailed[dayIdx].parts.length ? 
+										<div className={styles.resourcesLine}>No incidents for this day</div>
+									:
+										daysDetailed[dayIdx].parts.map((detailed, partIdx) => (
+											<div className={styles.detailed}>
+												<div className={`${styles.hourTitle} ${styles['hourTitle' + detailed.state]}`}>
+													{getTime(detailed.startTime, 'Hours')+':'+getTime(detailed.startTime, 'Minutes')+':'+getTime(detailed.startTime, 'Seconds')+(detailed.startTime !== detailed.endTime ? ' -> '+getTime(detailed.endTime, 'Hours')+':'+getTime(detailed.endTime, 'Minutes')+':'+getTime(detailed.endTime, 'Seconds') : '')}
+												</div>
+												<div className={styles.resourcesLine}>
+													<div className={styles.fourBoxes}>CPU: {(detailed.minCpu * 100).toFixed(2)+(detailed.minCpu !== detailed.maxCpu ? '-'+(detailed.maxCpu * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Mem: {(detailed.minMem * 100).toFixed(2)+(detailed.minMem !== detailed.maxMem ? '-'+(detailed.maxMem * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Swap: {(detailed.minSwap * 100).toFixed(2)+(detailed.minSwap !== detailed.maxSwap ? '-'+(detailed.maxSwap * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Disk: {(detailed.minHdd * 100).toFixed(2)+(detailed.minHdd !== detailed.maxHdd ? '-'+(detailed.maxHdd * 100).toFixed(2) : '')+'%'}</div>
+												</div>
 											</div>
-											<div className={styles.resourcesLine}>
-												<div className={styles.fourBoxes}>CPU: {(detailed.minCpu * 100).toFixed(2)+(detailed.minCpu !== detailed.maxCpu ? '-'+(detailed.maxCpu * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Mem: {(detailed.minMem * 100).toFixed(2)+(detailed.minMem !== detailed.maxMem ? '-'+(detailed.maxMem * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Swap: {(detailed.minSwap * 100).toFixed(2)+(detailed.minSwap !== detailed.maxSwap ? '-'+(detailed.maxSwap * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Disk: {(detailed.minHdd * 100).toFixed(2)+(detailed.minHdd !== detailed.maxHdd ? '-'+(detailed.maxHdd * 100).toFixed(2) : '')+'%'}</div>
-											</div>
-										</div>
-									))
+										))
 								}
 							</div>
 						))
