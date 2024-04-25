@@ -226,7 +226,9 @@ export default function ProjectUsage() {
 								</div>
 								{
 									!daysDetailed[dayIdx].parts.length ? 
-										<div className={styles.resourcesLine}>No incidents for this day</div>
+										<div className={styles.detailed}>
+											<div className={styles.resourcesLine}>No incidents for this day</div>
+										</div>
 									:
 										daysDetailed[dayIdx].parts.map((detailed, partIdx) => (
 											<div className={styles.detailed}>
