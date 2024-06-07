@@ -28,7 +28,7 @@ export default function Home() {
 				target={'_blank'}
 				rel="noopener noreferrer"
 				>
-				<a href="/news" className={styles.serverUsageLabel}>News</a>
+				<a href={'/news'} target={'_blank'} className={styles.serverUsageLabel}>News</a>
 				<div className={styles.serverUsageHeader}>Server Status</div>
 				<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.cpu ? (lastServerUsage.cpu > 0.9 ? 'Red' : lastServerUsage.cpu > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 					<div className={styles.sameHeight}></div>
