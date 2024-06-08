@@ -1,5 +1,8 @@
 .DS_Store
 
+#custom news
+public/news*
+
 # Logs
 logs
 *.log
