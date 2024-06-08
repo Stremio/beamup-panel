@@ -110,3 +110,15 @@ After setting all required ENV vars, start the app with `npm start`
 SESSIONS_FOLDER=../ # a folder that is persisted for sessions data
 SESSIONS_EXPIRE=2592000000 # 30 days
 ```
+
+
+## Adding a Custom News Page
+
+To include a custom `news.html` page for deployment:
+
+1. **Create `news.html`**: Develop your custom HTML file.
+
+2. **Place in `public` directory**: Add the `news.html` file to the `public` directory of the project.
+
+3. **Verify**: Ensure the server is running and access the page at `https://your-deployment-url/news.html`.
+
