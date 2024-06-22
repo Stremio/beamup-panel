@@ -74,6 +74,7 @@ server {
     }
 }
 ```
+This can be saved in /etc/nginx/sites-available/ with a symbolic link in /etc/nginx/sites-enabled/
 ### Firewall config
 To configure the firewall as configured in stremio-beamup, and following same example, this commands should suffice
 ```
