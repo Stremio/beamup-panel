@@ -37,6 +37,7 @@ SERVER_PORT=4000
 2. Edit the file to update the paths according to your setup.
 3. Enable and start the service:
    ```
+   sudo systemctl daemon-reload
    sudo systemctl enable beamup-panel.service
    sudo systemctl start beamup-panel.service
    ```
