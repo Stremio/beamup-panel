@@ -66,7 +66,7 @@ const getServerUsage = (serverId) => {
 						const containersUsage = serverUsage.containers.map(el => el[issueWith])
 						const largest3idx = get3largestIdx(containersUsage)
 						largest3idx.forEach(containerIdx => {
-							msg += `${serverUsage.containers[containerIdx].name} using ${issueWith.toUpperCase()}: ${serverUsage.containers[containerIdx][issueWith]}\n`
+							msg += `${serverUsage.containers[containerIdx].name} project using CPU: ${serverUsage.containers[containerIdx].cpu}, MEM: ${serverUsage.containers[containerIdx].mem}\n`
 						})
 					}
 					slack.say(msg)
