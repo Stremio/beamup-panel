@@ -55,10 +55,14 @@
 		max-width: calc(100% - 20px);
 	}
 
+	.serverUsageTabHolder {
+		display: flex;
+	}
+
 	.serverUsageTab {
 		display: inline-block;
 		position: relative;
-		width: 25%;
+		flex: 1;
 		margin: 0;
 		padding: 0;
 		border-bottom: 10px solid silver;

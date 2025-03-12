@@ -30,29 +30,25 @@ export default function Home() {
 				>
 				<a href={'/news.html'} target={'_blank'} className={styles.serverUsageLabel}>News</a>
 				<div className={styles.serverUsageHeader}>Server Status</div>
-				<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.cpu ? (lastServerUsage.cpu > 0.9 ? 'Red' : lastServerUsage.cpu > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
-					<div className={styles.sameHeight}></div>
-					<div className={styles.serverUsageElement}>
-						<div className={styles.serverUsageTitle}>CPU</div>
-						<div>{lastServerUsage?.cpu ? (lastServerUsage.cpu * 100).toFixed(2) + '%' : '0.00%' }</div>
-					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.mem ? (lastServerUsage.mem > 0.9 ? 'Red' : lastServerUsage.mem > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
-					<div className={styles.sameHeight}></div>
-					<div className={styles.serverUsageElement}>
-						<div className={styles.serverUsageTitle}>Mem</div>
-						<div>{lastServerUsage?.mem ? (lastServerUsage.mem * 100).toFixed(2) + '%' : '0.00%' }</div>
-					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.swap ? (lastServerUsage.swap > 0.9 ? 'Red' : lastServerUsage.swap > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
-					<div className={styles.sameHeight}></div>
-					<div className={styles.serverUsageElement}>
-						<div className={styles.serverUsageTitle}>Swap</div>
-						<div>{lastServerUsage?.swap ? (lastServerUsage.swap * 100).toFixed(2) + '%' : '0.00%' }</div>
-					</div>
-				</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.hdd ? (lastServerUsage.hdd > 0.93 ? 'Red' : lastServerUsage.hdd > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
-					<div className={styles.sameHeight}></div>
-					<div className={styles.serverUsageElement}>
-						<div className={styles.serverUsageTitle}>Disk</div>
-						<div>{lastServerUsage?.hdd ? (lastServerUsage.hdd * 100).toFixed(2) + '%' : '0.00%' }</div>
+				<div className={styles.serverUsageTabHolder}>
+					<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.cpu ? (lastServerUsage.cpu > 0.9 ? 'Red' : lastServerUsage.cpu > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+						<div className={styles.sameHeight}></div>
+						<div className={styles.serverUsageElement}>
+							<div className={styles.serverUsageTitle}>CPU</div>
+							<div>{lastServerUsage?.cpu ? (lastServerUsage.cpu * 100).toFixed(2) + '%' : '0.00%' }</div>
+						</div>
+					</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.mem ? (lastServerUsage.mem > 0.9 ? 'Red' : lastServerUsage.mem > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+						<div className={styles.sameHeight}></div>
+						<div className={styles.serverUsageElement}>
+							<div className={styles.serverUsageTitle}>Mem</div>
+							<div>{lastServerUsage?.mem ? (lastServerUsage.mem * 100).toFixed(2) + '%' : '0.00%' }</div>
+						</div>
+					</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.hdd ? (lastServerUsage.hdd > 0.93 ? 'Red' : lastServerUsage.hdd > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+						<div className={styles.sameHeight}></div>
+						<div className={styles.serverUsageElement}>
+							<div className={styles.serverUsageTitle}>Disk</div>
+							<div>{lastServerUsage?.hdd ? (lastServerUsage.hdd * 100).toFixed(2) + '%' : '0.00%' }</div>
+						</div>
 					</div>
 				</div>
 			</motion.a>

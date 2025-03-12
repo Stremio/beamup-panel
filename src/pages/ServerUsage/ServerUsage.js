@@ -62,8 +62,8 @@ export default function ServerUsage() {
 		let obj = {}
 		for (var i = 0; data.usage[i]; i++) {
 			const usage = data.usage[i]
-			const isDanger = usage?.cpu > 0.93 || usage?.mem > 0.9 || usage?.swap > 0.9 || usage?.hdd > 0.93
-			const isWarning = usage?.cpu > 0.84 || usage?.mem > 0.8 || usage?.swap > 0.8 || usage?.hdd > 0.84
+			const isDanger = usage?.cpu > 0.93 || usage?.mem > 0.9 || usage?.hdd > 0.93
+			const isWarning = usage?.cpu > 0.84 || usage?.mem > 0.8 || usage?.hdd > 0.84
 			const state = isDanger ? 'Red' : isWarning ? 'Yellow' : 'Green'
 			if (obj.state === state) {
 				obj.startTime = usage.timestamp
@@ -72,8 +72,6 @@ export default function ServerUsage() {
 				obj.maxCpu = Math.max(obj.maxCpu, usage?.cpu || 0)
 				obj.minMem = Math.min(obj.minMem, usage?.mem || 0)
 				obj.maxMem = Math.max(obj.maxMem, usage?.mem || 0)
-				obj.minSwap = Math.min(obj.minSwap, usage?.swap || 0)
-				obj.maxSwap = Math.max(obj.maxSwap, usage?.swap || 0)
 				obj.minHdd = Math.min(obj.minHdd, usage?.hdd || 0)
 				obj.maxHdd = Math.max(obj.maxHdd, usage?.hdd || 0)
 			} else {
@@ -87,8 +85,6 @@ export default function ServerUsage() {
 					maxCpu: usage?.cpu || 0,
 					minMem: usage?.mem || 0,
 					maxMem: usage?.mem || 0,
-					minSwap: usage?.swap || 0,
-					maxSwap: usage?.swap || 0,
 					minHdd: usage?.hdd || 0,
 					maxHdd: usage?.hdd || 0,
 					usage: [usage]
@@ -115,29 +111,25 @@ export default function ServerUsage() {
 				<a href={'/'} className={styles.titleHref}><h1 className={styles.heading}>BeamUp</h1></a>
 				<div className={styles.serverUsage}>
 					<div className={styles.serverUsageHeader}>Current Status</div>
-					<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.cpu ? (lastServerUsage.cpu > 0.93 ? 'Red' : lastServerUsage.cpu > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
-						<div className={styles.sameHeight}></div>
-						<div className={styles.serverUsageElement}>
-							<div className={styles.serverUsageTitle}>CPU</div>
-							<div>{lastServerUsage?.cpu ? (lastServerUsage.cpu * 100).toFixed(2) + '%' : '0.00%' }</div>
-						</div>
-					</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.mem ? (lastServerUsage.mem > 0.9 ? 'Red' : lastServerUsage.mem > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
-						<div className={styles.sameHeight}></div>
-						<div className={styles.serverUsageElement}>
-							<div className={styles.serverUsageTitle}>Mem</div>
-							<div>{lastServerUsage?.mem ? (lastServerUsage.mem * 100).toFixed(2) + '%' : '0.00%' }</div>
-						</div>
-					</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.swap ? (lastServerUsage.swap > 0.9 ? 'Red' : lastServerUsage.swap > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
-						<div className={styles.sameHeight}></div>
-						<div className={styles.serverUsageElement}>
-							<div className={styles.serverUsageTitle}>Swap</div>
-							<div>{lastServerUsage?.swap ? (lastServerUsage.swap * 100).toFixed(2) + '%' : '0.00%' }</div>
-						</div>
-					</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.hdd ? (lastServerUsage.hdd > 0.93 ? 'Red' : lastServerUsage.hdd > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
-						<div className={styles.sameHeight}></div>
-						<div className={styles.serverUsageElement}>
-							<div className={styles.serverUsageTitle}>Disk</div>
-							<div>{lastServerUsage?.hdd ? (lastServerUsage.hdd * 100).toFixed(2) + '%' : '0.00%' }</div>
+					<div className={styles.serverUsageTabHolder}>
+						<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.cpu ? (lastServerUsage.cpu > 0.93 ? 'Red' : lastServerUsage.cpu > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+							<div className={styles.sameHeight}></div>
+							<div className={styles.serverUsageElement}>
+								<div className={styles.serverUsageTitle}>CPU</div>
+								<div>{lastServerUsage?.cpu ? (lastServerUsage.cpu * 100).toFixed(2) + '%' : '0.00%' }</div>
+							</div>
+						</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.mem ? (lastServerUsage.mem > 0.9 ? 'Red' : lastServerUsage.mem > 0.8 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+							<div className={styles.sameHeight}></div>
+							<div className={styles.serverUsageElement}>
+								<div className={styles.serverUsageTitle}>Mem</div>
+								<div>{lastServerUsage?.mem ? (lastServerUsage.mem * 100).toFixed(2) + '%' : '0.00%' }</div>
+							</div>
+						</div><div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.hdd ? (lastServerUsage.hdd > 0.93 ? 'Red' : lastServerUsage.hdd > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
+							<div className={styles.sameHeight}></div>
+							<div className={styles.serverUsageElement}>
+								<div className={styles.serverUsageTitle}>Disk</div>
+								<div>{lastServerUsage?.hdd ? (lastServerUsage.hdd * 100).toFixed(2) + '%' : '0.00%' }</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -166,7 +158,7 @@ export default function ServerUsage() {
 													{getTime(detailed.startTime, 'Hours')+':'+getTime(detailed.startTime, 'Minutes')+':'+getTime(detailed.startTime, 'Seconds')+(detailed.startTime !== detailed.endTime ? ' -> '+getTime(detailed.endTime, 'Hours')+':'+getTime(detailed.endTime, 'Minutes')+':'+getTime(detailed.endTime, 'Seconds') : '')}
 												</div>
 												<div className={styles.resourcesLine}>
-													<div className={styles.fourBoxes}>CPU: {(detailed.minCpu * 100).toFixed(2)+(detailed.minCpu !== detailed.maxCpu ? '-'+(detailed.maxCpu * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Mem: {(detailed.minMem * 100).toFixed(2)+(detailed.minMem !== detailed.maxMem ? '-'+(detailed.maxMem * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Swap: {(detailed.minSwap * 100).toFixed(2)+(detailed.minSwap !== detailed.maxSwap ? '-'+(detailed.maxSwap * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Disk: {(detailed.minHdd * 100).toFixed(2)+(detailed.minHdd !== detailed.maxHdd ? '-'+(detailed.maxHdd * 100).toFixed(2) : '')+'%'}</div>
+													<div className={styles.fourBoxes}>CPU: {(detailed.minCpu * 100).toFixed(2)+(detailed.minCpu !== detailed.maxCpu ? '-'+(detailed.maxCpu * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Mem: {(detailed.minMem * 100).toFixed(2)+(detailed.minMem !== detailed.maxMem ? '-'+(detailed.maxMem * 100).toFixed(2) : '')+'%'}</div><div className={styles.fourBoxes}>Disk: {(detailed.minHdd * 100).toFixed(2)+(detailed.minHdd !== detailed.maxHdd ? '-'+(detailed.maxHdd * 100).toFixed(2) : '')+'%'}</div>
 												</div>
 											</div>
 										))
