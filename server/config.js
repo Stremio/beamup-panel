@@ -6,6 +6,7 @@ require('dotenv-expand').expand(
 );
 
 const config = {
+  manager_node: process.env.MANAGER_NODE || 'stremio-beamup-swarm-0',
   client_id: process.env.CLIENT_ID || '1',
   client_secret: process.env.CLIENT_SECRET || '1',
   slack_webhook: process.env.SLACK_WEBHOOK || '1',

@@ -10,7 +10,8 @@ const githubRestApi = require('./githubRestApi')
 const sessions = require('./sessions')
 const slack = require('./slack')
 
-const getServerUsage = require('./getServerUsage')
+const getSwarmNodes = require('./getSwarmNodes')
+const getServerStats = require('./getServerStats')
 
 const config = require("./config");
 
@@ -188,6 +189,47 @@ app.get('/doDelete', protected, async (req, res) => {
     }
 });
 
+app.get('/doDelete', protected, async (req, res) => {
+    const login = res.locals.userData.login;
+    const proj = req.query.proj;
+    if (userHasProject(login, proj)) {
+        
+        deleting.push(proj);
+        projects.find(el => {
+            if (el.name === proj) {
+                el.status = 'deleting'
+            }
+        });
+
+        // /usr/local/bin/beamup-delete-addon --force "1fe84bc728af-rpdb"
+        const spw = cp.spawn(
+            '/usr/local/bin/beamup-delete-addon', ['--force', proj]
+            )
+
+        const send = (data) => {
+          res.write(data.toString() + '\n')
+        }
+
+        res.set({
+          // 'Content-Type': 'text/plain',
+          // 'Content-Disposition': `attachment; filename="logs-${proj}-${Date.now()}.txt"`,
+          'transfer-encoding': 'chunked',
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Content-Encoding': 'none'
+        })
+
+        spw.stdout.on('data', send)
+        spw.stderr.on('data', send)
+
+        spw.on('close', function (code) {
+            res.end()
+        })
+    } else {
+        return res.status(500).json({ errMessage: 'You do not have access to this project' });
+    }
+});
+
 app.get('/doRestart', protected, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
@@ -204,10 +246,9 @@ app.get('/doRestart', protected, async (req, res) => {
         let redirectTimeout = setTimeout(() => {
             respond(null, '/')
         }, 5000);
-        // 'docker service update --force beamup_1fe84bc728af-rpdb'
-        // must prefix proj name with `beamup_`
+        // ssh stremio-beamup-swarm-0 project-update 1fe84bc728af-rpdb
         cp.exec(
-            `docker service update --force beamup_${proj}`,
+            `ssh ${config.manager_node} project-update ${proj}`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`err: ${err} ${err.message} ${err.toString()}`);
@@ -239,11 +280,11 @@ let lastTime = 0
 
 function getProjects() {
     if (lastTime < Date.now() - config.projects_cache_time) {
-        // 'docker service ls'
+        // 'ssh stremio-beamup-swarm-0 projects'
 
         return new Promise((resolve, reject) => {
             cp.exec(
-                `docker service ls`,
+                `ssh ${config.manager_node} projects`,
                 (err, stdout, stderr) => {
 
                     if (err) {
@@ -259,7 +300,7 @@ function getProjects() {
 
                     if (stdout) {
 
-                        const tempProjects = []
+                        let tempProjects = []
 
                         stdout.split(String.fromCharCode(10)).forEach((line, count) => {
                             if (count && line) { // ignore first line
@@ -272,50 +313,28 @@ function getProjects() {
                                 tempProjects.push({ id: parts[0], replicas, name, status })
                             }
                         })
-
-                        cp.exec(
-                            `docker stats --no-stream`,
-                            (err, stdout, stderr) => {
-                                if (err) {
-                                    console.log(`err: ${err} ${err.message} ${err.toString()}`)
-                                    return resolve()
-                                }
-
-                                if (stderr) {
-                                    console.log('stderr')
-                                    console.log(stderr)
-                                    return resolve()
-                                }
-
-                                if (stdout) {
-                                    stdout.split(String.fromCharCode(10)).forEach((line, count) => {
-                                        if (count && line) { // ignore first line
-                                            const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
-                                            const name = parts[1].split('.')[0].replace('beamup_', '')
-                                            tempProjects.find((el, ij) => {
-                                                if (el.name === name) {
-                                                    tempProjects[ij].serviceId = parts[0]
-                                                    tempProjects[ij].cpu = parts[2]
-                                                    tempProjects[ij].memUsage = parts[3]
-                                                    tempProjects[ij].memPerc = parts[4]
-                                                    tempProjects[ij].netIO = parts[5]
-                                                    tempProjects[ij].blockIO = parts[6]
-                                                }
-                                            })
-                                        }
-                                    })
-
-                                    projects = tempProjects
-
-                                    lastTime = Date.now()
-
-                                    return resolve(projects)
-                                }
-
-                                return resolve()
-
-                            }
-                        )
+                        return getServerUsage().then(({containers})=>{
+                            containers.forEach((container) => {
+                                tempProjects.find((el, ij) => {
+                                    if (el.name === container.name) {
+                                        tempProjects[ij].node = container.node
+                                        tempProjects[ij].serviceId = container.pids
+                                        tempProjects[ij].cpu = container.cpu
+                                        tempProjects[ij].memUsage = container.memUsage
+                                        tempProjects[ij].memPerc = container.mem
+                                        tempProjects[ij].netIO = container.netIO
+                                        tempProjects[ij].blockIO = container.blockIO
+                                    }
+                                })
+                            })
+                            
+                            lastTime = Date.now()
+                            projects = tempProjects;
+                            return resolve(projects)
+                        }).catch(err => {
+                            console.log(`err: ${err} ${err.message} ${err.toString()}`)
+                            return resolve()
+                        })
                     }
                 }
             )
@@ -325,7 +344,8 @@ function getProjects() {
     return Promise.resolve(projects)
 }
 
-const SHA256 = require('crypto-js/sha256')
+const SHA256 = require('crypto-js/sha256');
+const { boolean } = require("joi");
 
 function getUserHash(githubLogin) {
     return SHA256(githubLogin.toLowerCase()+'\n').toString().substr(0, 12)
@@ -398,13 +418,32 @@ app.listen(PORT, () => {
 
 const sessionsFolder = config.sessions_folder || '../'
 
+const getServerUsage= () => {
+    return getSwarmNodes().then(nodes => {
+        const nodes = [];
+        let containers = [];
+        const promises = nodes.map(node => 
+            getServerStats(node.HOSTNAME)
+                .then(stats => {
+                    containers = containers.concat(stats.containers)
+                    delete stats.containers
+                    nodes.push(stats)
+                })
+        )
+        return Promise.all(promises).then(()=>{
+            return {nodes,containers};
+        })
+    })
+
+}
+
 const logServerUsage = () => {
     async function updateServerUsage() {
         let serverUsageHistory = []
         try {
             serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
         } catch(e) {}
-        const serverUsage = await getServerUsage()
+        const {serverUsage = nodes} = await getServerUsage()
         serverUsage.timestamp = Date.now()
         lastServerUsage = serverUsage
         serverUsageHistory.unshift(serverUsage)
