@@ -30,6 +30,17 @@ function fill(obj) {
 export default function ServerUsage() {
 	const { serverUsage } = useServerUsage();
 
+	const [dt, setDt] = React.useState({ server: 0 });
+
+	React.useEffect(() => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const srv = parseInt(searchParams.get('server') || 0);
+
+		if (srv) {
+			setDt((dt) => { return { ...dt, server: srv }; });
+		}
+	}, []);
+
 	const days = []
 
 	let current = ''
@@ -110,7 +121,7 @@ export default function ServerUsage() {
 			<div className={styles.tasksContainer}>
 				<a href={'/'} className={styles.titleHref}><h1 className={styles.heading}>BeamUp</h1></a>
 				<div className={styles.serverUsage}>
-					<div className={styles.serverUsageHeader}>Current Status</div>
+					<div className={styles.serverUsageHeader}>{`Server ${dt.server+1}: Current Status`}</div>
 					<div className={styles.serverUsageTabHolder}>
 						<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.cpu ? (lastServerUsage.cpu > 0.93 ? 'Red' : lastServerUsage.cpu > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 							<div className={styles.sameHeight}></div>

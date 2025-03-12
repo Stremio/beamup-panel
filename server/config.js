@@ -14,9 +14,8 @@ const config = {
   session_expire: parseInt(process.env.SESSION_EXPIRE || 30 * 24 * 60 * 60 * 1000),
   session_refresh_interval: 60 * 1000,
   sessions_folder: process.env.SESSIONS_FOLDER || '../',
-  server_usage_interval: 5 * 60 * 1000, // 5s
+  usage_interval: 5 * 60 * 1000, // 5s
   server_usage_history_days: 7,
-  project_usage_interval: 5 * 60 * 1000, // 5s
   project_usage_history_days: 3,
 };
 
@@ -29,9 +28,8 @@ const envVarsSchema = Joi.object({
   session_expire: Joi.number().required(),
   session_refresh_interval: Joi.number().required(),
   sessions_folder: Joi.string().required(),
-  server_usage_interval: Joi.number().required(),
+  usage_interval: Joi.number().required(),
   server_usage_history_days: Joi.number().required(),
-  project_usage_interval: Joi.number().required(),
   project_usage_history_days: Joi.number().required(),
 });
 

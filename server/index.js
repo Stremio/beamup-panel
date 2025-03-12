@@ -10,7 +10,7 @@ const githubRestApi = require('./githubRestApi')
 const sessions = require('./sessions')
 const slack = require('./slack')
 
-const getServerUsage = require('./getServerUsage')
+const getGeneralUsage = require('./getGeneralUsage')
 
 const config = require("./config");
 
@@ -74,7 +74,6 @@ app.get('/getProjects', protected, async (req, res) => {
     const login = res.locals.userData.login;
 
     try {
-        await getProjects()
         return res.status(200).json(projects.filter(proj => userHasProject(login, proj.name)))
     } catch (e) {
         return res.status(500).json({ errMessage: (e || {}).message || 'Unknown Error' });
@@ -88,12 +87,13 @@ app.get('/getLastServerUsage', protected, async (req, res) => {
 })
 
 app.get('/getServerUsage', async (req, res) => {
+    const srv = parseInt(req.query.server);
     let serverUsageHistory = []
     try {
-        serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
+        serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'servers_usage_history.json'))
     } catch(e) {}
-    if (!serverUsageHistory.length) {
-        serverUsageHistory = [
+    if (!serverUsageHistory[srv] || !serverUsageHistory[srv].length) {
+        const dummySrvData = [
             {
                 mem: 0,
                 swap: 0,
@@ -102,8 +102,9 @@ app.get('/getServerUsage', async (req, res) => {
                 timestamp: Date.now(),
             }
         ]
+        return res.status(200).json(dummySrvData)
     }
-    return res.status(200).json(serverUsageHistory)
+    return res.status(200).json(serverUsageHistory[srv])
 })
 
 app.get('/getProjectUsage', protected, async (req, res) => {
@@ -235,96 +236,6 @@ app.get('/doRestart', protected, async (req, res) => {
 
 let projects = []
 
-let lastTime = 0
-
-function getProjects() {
-    if (lastTime < Date.now() - config.projects_cache_time) {
-        // 'docker service ls'
-
-        return new Promise((resolve, reject) => {
-            cp.exec(
-                `docker service ls`,
-                (err, stdout, stderr) => {
-
-                    if (err) {
-                        console.log(`err: ${err} ${err.message} ${err.toString()}`)
-                        return resolve()
-                    }
-
-                    if (stderr) {
-                        console.log('stderr')
-                        console.log(stderr)
-                        return resolve()
-                    }
-
-                    if (stdout) {
-
-                        const tempProjects = []
-
-                        stdout.split(String.fromCharCode(10)).forEach((line, count) => {
-                            if (count && line) { // ignore first line
-                                const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
-                                const name = parts[1].split('.')[0].replace('beamup_', '')
-                                const replicas = parts[3] || ''
-                                const running = parseInt(parts[3].split('/')[0])
-                                const total = parseInt(parts[3].split('/')[1])
-                                const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
-                                tempProjects.push({ id: parts[0], replicas, name, status })
-                            }
-                        })
-
-                        cp.exec(
-                            `docker stats --no-stream`,
-                            (err, stdout, stderr) => {
-                                if (err) {
-                                    console.log(`err: ${err} ${err.message} ${err.toString()}`)
-                                    return resolve()
-                                }
-
-                                if (stderr) {
-                                    console.log('stderr')
-                                    console.log(stderr)
-                                    return resolve()
-                                }
-
-                                if (stdout) {
-                                    stdout.split(String.fromCharCode(10)).forEach((line, count) => {
-                                        if (count && line) { // ignore first line
-                                            const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
-                                            const name = parts[1].split('.')[0].replace('beamup_', '')
-                                            tempProjects.find((el, ij) => {
-                                                if (el.name === name) {
-                                                    tempProjects[ij].serviceId = parts[0]
-                                                    tempProjects[ij].cpu = parts[2]
-                                                    tempProjects[ij].memUsage = parts[3]
-                                                    tempProjects[ij].memPerc = parts[4]
-                                                    tempProjects[ij].netIO = parts[5]
-                                                    tempProjects[ij].blockIO = parts[6]
-                                                }
-                                            })
-                                        }
-                                    })
-
-                                    projects = tempProjects
-
-                                    lastTime = Date.now()
-
-                                    return resolve(projects)
-                                }
-
-                                return resolve()
-
-                            }
-                        )
-                    }
-                }
-            )
-        })
-    }
-
-    return Promise.resolve(projects)
-}
-
 const SHA256 = require('crypto-js/sha256')
 
 function getUserHash(githubLogin) {
@@ -345,7 +256,6 @@ function auth(req, res) {
     })
         .then((response) => response.text())
         .then(async (paramsString) => {
-            await getProjects()
 
             let params = new URLSearchParams(paramsString);
             const access_token = params.get('access_token');
@@ -398,56 +308,46 @@ app.listen(PORT, () => {
 
 const sessionsFolder = config.sessions_folder || '../'
 
-const logServerUsage = () => {
+const logUsage = () => {
     async function updateServerUsage() {
         let serverUsageHistory = []
         try {
-            serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
+            serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'servers_usage_history.json'))
         } catch(e) {}
-        const serverUsage = await getServerUsage()
-        serverUsage.timestamp = Date.now()
-        lastServerUsage = serverUsage
-        serverUsageHistory.unshift(serverUsage)
-        const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.server_usage_interval) * config.server_usage_history_days
-        if (serverUsageHistory.length > maxEntries) {
-            serverUsageHistory = serverUsageHistory.slice(0, maxEntries)
+        const generalUsage = await getGeneralUsage(deleting)
+        const serversUsage = generalUsage.servers
+        for (let i = 0; i++; serversUsage[i]) {
+            serverUsage[i].timestamp = Date.now()
+            if (!serverUsageHistory[i]) serverUsageHistory[i] = []
+            serverUsageHistory[i].unshift(serverUsage)
+            const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.usage_interval) * config.server_usage_history_days
+            if (serverUsageHistory[i].length > maxEntries) {
+                serverUsageHistory[i] = serverUsageHistory[i].slice(0, maxEntries)
+            }
         }
-        fs.writeFileSync(sessionsFolder + 'server_usage_history.json', JSON.stringify(serverUsageHistory))
+        lastServerUsage = serversUsage
+        fs.writeFileSync(sessionsFolder + 'servers_usage_history.json', JSON.stringify(serverUsageHistory))
+        if (Array.isArray(projects) && projects.length) {
+            projects = generalUsage.projects
+            let projectUsageHistory = []
+            try {
+                projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
+            } catch(e) {}
+            projectUsageHistory.unshift({
+                timestamp: Date.now(),
+                snapshot: projects,
+            })
+            const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.usage_interval) * config.project_usage_history_days
+            if (projectUsageHistory.length > maxEntries) {
+                projectUsageHistory = projectUsageHistory.slice(0, maxEntries)
+            }
+            fs.writeFileSync(sessionsFolder + 'project_usage_history.json', JSON.stringify(projectUsageHistory))
+        }
     }
     updateServerUsage()
     setTimeout(() => {
-        logServerUsage()
-    }, config.server_usage_interval)
+        logUsage()
+    }, config.usage_interval)
 }
 
-logServerUsage()
-
-const logProjectUsage = () => {
-    async function updateProjectUsage() {
-        let projectUsageHistory = []
-        try {
-            projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
-        } catch(e) {}
-        try {
-            await getProjects()
-        } catch (e) {
-            return res.status(500).json({ errMessage: (e || {}).message || 'Unknown Error' });
-        }
-        projectUsageHistory.unshift({
-            timestamp: Date.now(),
-            snapshot: projects,
-        })
-        const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.project_usage_interval) * config.project_usage_history_days
-        if (projectUsageHistory.length > maxEntries) {
-            projectUsageHistory = projectUsageHistory.slice(0, maxEntries)
-        }
-        fs.writeFileSync(sessionsFolder + 'project_usage_history.json', JSON.stringify(projectUsageHistory))
-    }
-    updateProjectUsage()
-    setTimeout(() => {
-        logProjectUsage()
-    }, config.project_usage_interval)
-}
-
-logProjectUsage()
-
+logUsage()
