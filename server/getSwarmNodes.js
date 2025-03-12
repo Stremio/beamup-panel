@@ -1,9 +1,10 @@
 const {exec} = require('child_process');
 const config = require('./config');
+const getSSHCommand = require('./getSSHCommand');
 
 function getSwarmNodes() {
     return new Promise((resolve, reject) => {
-        exec(`ssh ${config.manager_node} swarm-nodes`, (err, stdout, stderr) => {
+        exec(getSSHCommand(config.node_manager, 'swarm-nodes'), (err, stdout, stderr) => {
             if (err) {
                 reject(err);
                 return;

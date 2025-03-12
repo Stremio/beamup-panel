@@ -2,6 +2,7 @@ const { exec } = require('child_process');
 const slack = require('./slack')
 const getSwarmNodes = require('./getSwarmNodes');
 const config = require('./config');
+const getSSHCommand = require('./getSSHCommand');
 
 function get3largestIdx(arr) {
     let fst = -Infinity, sec = -Infinity, thd = -Infinity
@@ -38,7 +39,7 @@ function get3largestIdx(arr) {
 
 const getServerUsage = (nodeHost) => {
 	return new Promise(async (resolve) => {
-		exec(`ssh ${nodeHost} server-stats`, (error, stdout, stderr) => {
+		exec(getSSHCommand(nodeHost, 'server-stats'), (error, stdout, stderr) => {
             if (error || !stdout) {
                 console.error(`Error executing command to get swarm resource usage: ${error}`);
                 resolve(false)
@@ -63,7 +64,7 @@ const getServerUsage = (nodeHost) => {
 					const maxNum = Math.max.apply(null, vals)
 					const idx = vals.indexOf(maxNum)
 					const issueWith = types[idx]
-					let msg = `${issueType} on server ${serverId}, CPU: ${serverUsage?.cpu}, MEM: ${serverUsage?.mem}, HDD: ${serverUsage?.hdd}\n`
+					let msg = `${issueType} on server ${nodeHost}, CPU: ${serverUsage?.cpu}, MEM: ${serverUsage?.mem}, HDD: ${serverUsage?.hdd}\n`
 					if (['cpu', 'mem'].includes(issueWith) && Array.isArray(serverUsage.containers) && serverUsage.containers.length) {
 						const containersUsage = serverUsage.containers.map(el => {
 							const val = el[issueWith === 'cpu' ? 'CPUPerc' : 'MemPerc']
@@ -89,8 +90,8 @@ const getGeneralUsage = (deleting) => {
 
         const servers = []
         let projects = []
-        for (let i = 0; i++; nodes[i]) {
-        	const serverData = await getServerUsage(nodes[i].hostname)
+        for (let i = 0; i < nodes.length; i++) {
+        	const serverData = await getServerUsage("localhost")
         	if (serverData) {
             	if (Array.isArray(serverData.containers) && serverData.containers.length) {
             		const containers = serverData.containers.filter(el => !!el['MemPerc'])
@@ -103,8 +104,7 @@ const getGeneralUsage = (deleting) => {
         if (!projects.length) {
             resolve({ servers, projects })
         } else {
-            cp.exec(
-                `ssh ${config.manager_node} projects`,
+            exec(getSSHCommand(config.node_manager, 'projects'),
                 (err, stdout, stderr) => {
 
                     if (err) {
@@ -118,43 +118,40 @@ const getGeneralUsage = (deleting) => {
                         return resolve()
                     }
 
+                    const tempProjects = []
                     if (stdout) {
-
-                        const tempProjects = []
-
                         stdout.split(String.fromCharCode(10)).forEach((line, count) => {
-                            if (count && line) { // ignore first line
-                                const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
-                                const name = parts[1].split('.')[0].replace('beamup_', '')
-                                const replicas = parts[3] || ''
-                                const running = parseInt(parts[3].split('/')[0])
-                                const total = parseInt(parts[3].split('/')[1])
-                                const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
-                                const project = projects.find(el => {
-                                	return el.Name === name
-                                })
-                                if (project) {
-                                	// {"BlockIO":"6.73GB / 33.6GB","CPUPerc":"0.27%","Container":"97db8f91703a","ID":"97db8f91703a","MemPerc":"0.29%","MemUsage":"46.05MiB / 15.63GiB","Name":"nginx","NetIO":"8.25GB / 12.4GB","PIDs":"8"}
-	                                tempProjects.push({
-	                                	id: parts[0],
-	                                	replicas,
-	                                	name,
-	                                	status,
-                                        node: container.node,
-                                        serviceId: container.Container,
-                                        cpu: container.CPUPerc,
-                                        memUsage: container.MemUsage,
-                                        memPerc: container.MemPerc,
-                                        netIO: container.NetIO,
-                                        blockIO: container.BlockIO,
-	                                })
-                                } else {
-	                                tempProjects.push({ id: parts[0], replicas, name, status })
-	                            }
+                            if(!(count && line)) return; // ignore first line
+                            const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
+                            const name = parts[1].split('.')[0].replace('beamup_', '')
+                            const replicas = parts[3] || ''
+                            const running = parseInt(parts[3].split('/')[0])
+                            const total = parseInt(parts[3].split('/')[1])
+                            const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
+                            const project = projects.find(el => {
+                                return el.Name === name
+                            })
+                            if(!project){
+                                return tempProjects.push({ id: parts[0], replicas, name, status });
                             }
+                            // {"BlockIO":"6.73GB / 33.6GB","CPUPerc":"0.27%","Container":"97db8f91703a","ID":"97db8f91703a","MemPerc":"0.29%","MemUsage":"46.05MiB / 15.63GiB","Name":"nginx","NetIO":"8.25GB / 12.4GB","PIDs":"8"}
+                            tempProjects.push({
+                                id: parts[0],
+                                replicas,
+                                name,
+                                status,
+                                node: project.node,
+                                serviceId: project.Container,
+                                cpu: project.CPUPerc,
+                                memUsage: project.MemUsage,
+                                memPerc: project.MemPerc,
+                                netIO: project.NetIO,
+                                blockIO: project.BlockIO,
+                            })
+                        
+                        
                         })
                     }
-
                     resolve({ servers, projects: tempProjects })
                 })
         }
