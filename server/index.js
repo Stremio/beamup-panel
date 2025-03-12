@@ -180,17 +180,26 @@ app.get('/doDelete', protected, async (req, res) => {
                 el.status = 'deleting'
             }
         });
+
+        function removeFromDeleting() {
+            const index = deleting.indexOf(proj)
+            if (index !== -1)
+              deleting.splice(index, 1)
+        }
+
         cp.exec(
             `/usr/local/bin/beamup-delete-addon --force "${proj}"`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
+                    removeFromDeleting()
                     res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
                     return;
                 }
 
                 if (stderr) {
                     console.log(`addon remove stderr: ${stderr}`);
+                    removeFromDeleting()
                     res.status(500).json({ errMessage: stderr })
                     return;
                 }
@@ -200,6 +209,10 @@ app.get('/doDelete', protected, async (req, res) => {
                 }
 
                 res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
+
+                setTimeout(() => {
+                    removeFromDeleting()
+                }, 2 * 60 * 60 * 1000) // consider the project deleted after 2 mins
             }
         );
         return;
