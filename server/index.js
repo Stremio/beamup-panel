@@ -171,6 +171,7 @@ app.get('/getLogs', protected, async (req, res) => {
 
 const deleting = [];
 
+/*
 app.get('/doDelete', protected, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
@@ -187,7 +188,7 @@ app.get('/doDelete', protected, async (req, res) => {
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
-});
+});*/
 
 app.get('/doDelete', protected, async (req, res) => {
     const login = res.locals.userData.login;
@@ -318,12 +319,12 @@ function getProjects() {
                                 tempProjects.find((el, ij) => {
                                     if (el.name === container.name) {
                                         tempProjects[ij].node = container.node
-                                        tempProjects[ij].serviceId = container.pids
-                                        tempProjects[ij].cpu = container.cpu
-                                        tempProjects[ij].memUsage = container.memUsage
-                                        tempProjects[ij].memPerc = container.mem
-                                        tempProjects[ij].netIO = container.netIO
-                                        tempProjects[ij].blockIO = container.blockIO
+                                        tempProjects[ij].serviceId = container.Container
+                                        tempProjects[ij].cpu = container.CPUPerc
+                                        tempProjects[ij].memUsage = container.MemUsage
+                                        tempProjects[ij].memPerc = container.MemPerc
+                                        tempProjects[ij].netIO = container.NetIO
+                                        tempProjects[ij].blockIO = container.BlockIO
                                     }
                                 })
                             })
