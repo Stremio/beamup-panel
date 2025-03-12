@@ -129,7 +129,7 @@ const getGeneralUsage = (deleting) => {
                             const total = parseInt(parts[3].split('/')[1])
                             const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
                             const project = projects.find(el => {
-                                return el.Name === name
+                                return el.Name === "beamup_" + name
                             })
                             if(!project){
                                 return tempProjects.push({ id: parts[0], replicas, name, status });
