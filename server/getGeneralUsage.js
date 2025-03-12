@@ -1,4 +1,38 @@
 const { exec } = require('child_process');
+const slack = require('./slack')
+
+function get3largestIdx(arr) {
+    let fst = -Infinity, sec = -Infinity, thd = -Infinity
+    let fstIdx = -1, secIdx = -1, thdIdx = -1
+
+    arr.forEach((x, idx) => {
+        if (x > fst) {
+            thd = sec
+            thdIdx = secIdx
+            sec = fst
+            secIdx = fstIdx
+            fst = x
+            fstIdx = idx
+        }
+        else if (x > sec && x !== fst) {
+            thd = sec
+            thdIdx = secIdx
+            sec = x
+            secIdx = idx
+        }
+        else if (x > thd && x !== sec && x !== fst) {
+            thd = x
+            thdIdx = idx
+        }
+    });
+
+    let res = []
+    if (fstIdx > -1) res.push(fstIdx)
+    if (secIdx > -1) res.push(secIdx)
+    if (thdIdx > -1) res.push(thdIdx)
+
+    return res
+}
 
 const getServerUsage = (serverId) => {
 	return new Promise(async (resolve) => {
@@ -16,6 +50,28 @@ const getServerUsage = (serverId) => {
                 resolve(false)
                 return
             }
+            // check server usage and projects usage
+            if (serverUsage) {
+				const isDanger = serverUsage?.cpu > 0.93 || serverUsage?.mem > 0.9 || serverUsage?.hdd > 0.93
+				const isWarning = serverUsage?.cpu > 0.84 || serverUsage?.mem > 0.8 || serverUsage?.hdd > 0.84
+				const issueType = isDanger ? 'Danger' : isWarning ? 'Warning' : false
+				if (issueType) {
+					const types = ['cpu', 'mem', 'hdd']
+					const vals = [serverUsage?.cpu, serverUsage?.mem, serverUsage?.hdd]
+					const maxNum = Math.max.apply(null, vals)
+					const idx = vals.indexOf(maxNum)
+					const issueWith = types[idx]
+					let msg = `${issueType} on server ${serverId}, CPU: ${serverUsage?.cpu}, MEM: ${serverUsage?.mem}, HDD: ${serverUsage?.hdd}\n`
+					if (['cpu', 'mem'].includes(issueWith)) {
+						const containersUsage = serverUsage.containers.map(el => el[issueWith])
+						const largest3idx = get3largestIdx(containersUsage)
+						largest3idx.forEach(containerIdx => {
+							msg += `${serverUsage.containers[containerIdx].name} using ${issueWith.toUpperCase()}: ${serverUsage.containers[containerIdx][issueWith]}\n`
+						})
+					}
+					slack.say(msg)
+				}
+			}
             resolve(serverUsage)
 		})
 	})	

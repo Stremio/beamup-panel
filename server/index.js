@@ -8,7 +8,6 @@ const fs = require('fs')
 const { client_id, client_secret } = require("./config");
 const githubRestApi = require('./githubRestApi')
 const sessions = require('./sessions')
-const slack = require('./slack')
 
 const getGeneralUsage = require('./getGeneralUsage')
 
@@ -175,7 +174,6 @@ app.get('/doDelete', protected, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        // send slack message about deletion request
         deleting.push(proj);
         projects.find(el => {
             if (el.name === proj) {
