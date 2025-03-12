@@ -8,7 +8,6 @@ const fs = require('fs')
 const { client_id, client_secret } = require("./config");
 const githubRestApi = require('./githubRestApi')
 const sessions = require('./sessions')
-const slack = require('./slack')
 
 const getGeneralUsage = require('./getGeneralUsage')
 
@@ -175,7 +174,6 @@ app.get('/doDelete', protected, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        // send slack message about deletion request
         deleting.push(proj);
         projects.find(el => {
             if (el.name === proj) {
@@ -183,7 +181,7 @@ app.get('/doDelete', protected, async (req, res) => {
             }
         });
         cp.exec(
-            `/usr/local/bin/beamup-delete-addon --force "${proj.replace('-', '/')}"`,
+            `/usr/local/bin/beamup-delete-addon --force "${proj}"`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
@@ -226,10 +224,9 @@ app.get('/doRestart', protected, async (req, res) => {
         let redirectTimeout = setTimeout(() => {
             respond(null, '/')
         }, 5000);
-        // 'docker service update --force beamup_1fe84bc728af-rpdb'
-        // must prefix proj name with `beamup_`
+        // ssh stremio-beamup-swarm-0 project-update 1fe84bc728af-rpdb
         cp.exec(
-            `docker service update --force beamup_${proj}`,
+            `ssh ${config.manager_node} project-update ${proj}`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`err: ${err} ${err.message} ${err.toString()}`);
