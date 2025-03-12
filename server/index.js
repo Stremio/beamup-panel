@@ -8,7 +8,6 @@ const fs = require('fs')
 const { client_id, client_secret } = require("./config");
 const githubRestApi = require('./githubRestApi')
 const sessions = require('./sessions')
-const slack = require('./slack')
 
 const getGeneralUsage = require('./getGeneralUsage')
 
@@ -175,15 +174,35 @@ app.get('/doDelete', protected, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        // send slack message about deletion request
         deleting.push(proj);
         projects.find(el => {
             if (el.name === proj) {
                 el.status = 'deleting'
             }
         });
-        slack.say(`${req.query.domain}: project ${proj} was requested for deletion`)
-        return res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
+        cp.exec(
+            `/usr/local/bin/beamup-delete-addon --force "${proj}"`,
+            (err, stdout, stderr) => {
+                if (err) {
+                    console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
+                    res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
+                    return;
+                }
+
+                if (stderr) {
+                    console.log(`addon remove stderr: ${stderr}`);
+                    res.status(500).json({ errMessage: stderr })
+                    return;
+                }
+
+                if (stdout) {
+                    console.log(`addon remove stdout: ${stdout}`);
+                }
+
+                res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
+            }
+        );
+        return;
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
@@ -205,10 +224,9 @@ app.get('/doRestart', protected, async (req, res) => {
         let redirectTimeout = setTimeout(() => {
             respond(null, '/')
         }, 5000);
-        // 'docker service update --force beamup_1fe84bc728af-rpdb'
-        // must prefix proj name with `beamup_`
+        // ssh stremio-beamup-swarm-0 project-update 1fe84bc728af-rpdb
         cp.exec(
-            `docker service update --force beamup_${proj}`,
+            `ssh ${config.manager_node} project-update ${proj}`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`err: ${err} ${err.message} ${err.toString()}`);
