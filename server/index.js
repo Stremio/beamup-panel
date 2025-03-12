@@ -182,8 +182,29 @@ app.get('/doDelete', protected, async (req, res) => {
                 el.status = 'deleting'
             }
         });
-        slack.say(`${req.query.domain}: project ${proj} was requested for deletion`)
-        return res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
+        cp.exec(
+            `/usr/local/bin/beamup-delete-addon --force "${proj.replace('-', '/')}"`,
+            (err, stdout, stderr) => {
+                if (err) {
+                    console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
+                    res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
+                    return;
+                }
+
+                if (stderr) {
+                    console.log(`addon remove stderr: ${stderr}`);
+                    res.status(500).json({ errMessage: stderr })
+                    return;
+                }
+
+                if (stdout) {
+                    console.log(`addon remove stdout: ${stdout}`);
+                }
+
+                res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
+            }
+        );
+        return;
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
