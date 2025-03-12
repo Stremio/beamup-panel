@@ -91,7 +91,7 @@ const getGeneralUsage = (deleting) => {
         const servers = []
         let projects = []
         for (let i = 0; i < nodes.length; i++) {
-        	const serverData = await getServerUsage("localhost")
+        	const serverData = await getServerUsage(config.node_prefix + i)
         	if (serverData) {
             	if (Array.isArray(serverData.containers) && serverData.containers.length) {
             		const containers = serverData.containers.filter(el => !!el['MemPerc'])
