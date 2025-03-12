@@ -17,6 +17,7 @@ const config = {
   usage_interval: 5 * 60 * 1000, // 5s
   server_usage_history_days: 7,
   project_usage_history_days: 3,
+  manager_node: process.env.MANAGER_NODE || 'stremio-beamup-swarm-0',
 };
 
 const envVarsSchema = Joi.object({
@@ -31,6 +32,7 @@ const envVarsSchema = Joi.object({
   usage_interval: Joi.number().required(),
   server_usage_history_days: Joi.number().required(),
   project_usage_history_days: Joi.number().required(),
+  manager_node: Joi.string().required(),
 });
 
 const { error } = envVarsSchema.validate(config);

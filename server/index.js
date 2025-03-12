@@ -181,7 +181,7 @@ app.get('/doDelete', protected, async (req, res) => {
             }
         });
         cp.exec(
-            `/usr/local/bin/beamup-delete-addon --force "${proj.replace('-', '/')}"`,
+            `/usr/local/bin/beamup-delete-addon --force "${proj}"`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
@@ -224,10 +224,9 @@ app.get('/doRestart', protected, async (req, res) => {
         let redirectTimeout = setTimeout(() => {
             respond(null, '/')
         }, 5000);
-        // 'docker service update --force beamup_1fe84bc728af-rpdb'
-        // must prefix proj name with `beamup_`
+        // ssh stremio-beamup-swarm-0 project-update 1fe84bc728af-rpdb
         cp.exec(
-            `docker service update --force beamup_${proj}`,
+            `ssh ${config.manager_node} project-update ${proj}`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`err: ${err} ${err.message} ${err.toString()}`);
