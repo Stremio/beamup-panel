@@ -62,7 +62,7 @@ const getServerUsage = (serverId) => {
 					const idx = vals.indexOf(maxNum)
 					const issueWith = types[idx]
 					let msg = `${issueType} on server ${serverId}, CPU: ${serverUsage?.cpu}, MEM: ${serverUsage?.mem}, HDD: ${serverUsage?.hdd}\n`
-					if (['cpu', 'mem'].includes(issueWith)) {
+					if (['cpu', 'mem'].includes(issueWith) && Array.isArray(serverUsage.containers) && serverUsage.containers.length) {
 						const containersUsage = serverUsage.containers.map(el => el[issueWith])
 						const largest3idx = get3largestIdx(containersUsage)
 						largest3idx.forEach(containerIdx => {
