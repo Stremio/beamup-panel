@@ -80,7 +80,7 @@ app.get('/getProjects', protectedRoute, async (req, res) => {
     }
 });
 
-let lastServerUsage = {}
+let lastServerUsage = []
 
 app.get('/getLastServerUsage', protectedRoute, async (req, res) => {
     return res.status(200).json(lastServerUsage)
@@ -168,7 +168,7 @@ app.get('/getLogs', protectedRoute, async (req, res) => {
     }
 });
 
-const deleting = [];
+var deleting = [];
 
 app.get('/doDelete', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
@@ -182,28 +182,29 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
             }
             return false;
         });
-        cp.exec(`beamup-delete-addon --force "${proj}"`,
-            (err, stdout, stderr) => {
-                if (err) {
-                    console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
-                    res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
-                    return;
-                }
 
-                if (stderr) {
-                    console.log(`addon remove stderr: ${stderr}`);
-                    res.status(500).json({ errMessage: stderr })
-                    return;
-                }
+        const spw = cp.spawn('beamup-delete-addon' ,['--force', proj])
 
-                if (stdout) {
-                    console.log(`addon remove stdout: ${stdout}`);
-                }
+        const testString = "Successfully deleted addon";
+        const send = (data) => {
+            console.log(data);
+          res.write(data.toString() + '\n')
+          if(data.toString().includes(testString)){
+            projects = projects.filter(el => el.name !== proj);
+            deleting = deleting.filter(el => el !== proj);
+          }
+        }
 
-                res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
-            }
-        );
-        return;
+        res.set({
+          'Content-Type': 'text/plain',
+        })
+
+        spw.stdout.on('data', send)
+        spw.stderr.on('data', send)
+
+        spw.on('close', function (code) {
+            res.end()
+        })
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
@@ -338,7 +339,7 @@ const logUsage = () => {
         for (let i = 0; i < serversUsage.length; i++) {
             serversUsage[i].timestamp = Date.now()
             if (!serverUsageHistory[i]) serverUsageHistory[i] = []
-            serverUsageHistory[i].unshift(serversUsage)
+            serverUsageHistory[i].unshift(serversUsage[i]);
             const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.usage_interval) * config.server_usage_history_days
             if (serverUsageHistory[i].length > maxEntries) {
                 serverUsageHistory[i] = serverUsageHistory[i].slice(0, maxEntries)
