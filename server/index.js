@@ -168,7 +168,7 @@ app.get('/getLogs', protectedRoute, async (req, res) => {
     }
 });
 
-var deleting = [];
+const deleting = [];
 
 app.get('/doDelete', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
@@ -178,33 +178,44 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
         projects.find(el => {
             if (el.name === proj) {
                 el.status = 'deleting'
-                return true;
             }
-            return false;
         });
 
-        const spw = cp.spawn('beamup-delete-addon' ,['--force', proj])
-
-        const testString = "Addon removal process completed successfully";
-        const send = (data) => {
-          res.write(data.toString() + '\n')
-          if(data.toString().includes(testString)){
-            projects = projects.filter(el => el.name !== proj);
-            deleting = deleting.filter(el => el !== proj);
-          }
+        function removeFromDeleting() {
+            const index = deleting.indexOf(proj)
+            if (index !== -1)
+              deleting.splice(index, 1)
         }
 
-        res.set({
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Transfer-Encoding': 'chunked'
-        })
+        cp.exec(
+            `/usr/local/bin/beamup-delete-addon --force "${proj}"`,
+            (err, stdout, stderr) => {
+                if (err) {
+                    console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
+                    removeFromDeleting()
+                    res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
+                    return;
+                }
 
-        spw.stdout.on('data', send)
-        spw.stderr.on('data', send)
+                if (stderr) {
+                    console.log(`addon remove stderr: ${stderr}`);
+                    removeFromDeleting()
+                    res.status(500).json({ errMessage: stderr })
+                    return;
+                }
 
-        spw.on('close', function (code) {
-            res.end()
-        })
+                if (stdout) {
+                    console.log(`addon remove stdout: ${stdout}`);
+                }
+
+                res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
+
+                setTimeout(() => {
+                    removeFromDeleting()
+                }, 2 * 60 * 60 * 1000) // consider the project deleted after 2 mins
+            }
+        );
+        return;
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
