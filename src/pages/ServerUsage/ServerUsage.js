@@ -47,7 +47,7 @@ export default function ServerUsage() {
 
 	let obj = {}
 
-	for (var i = 0; serverUsage[i]; i++) {
+	for (var i = 0; i < serverUsage.length; i++) {
 		const d = new Date(serverUsage[i].timestamp)
 		const dateString = addZero(d.getDate()) + '/' + addZero(d.getMonth()+1) + '/' + d.getFullYear()
 		if (current !== dateString) {
@@ -71,7 +71,7 @@ export default function ServerUsage() {
 	days.forEach(data => {
 		const parts = []
 		let obj = {}
-		for (var i = 0; data.usage[i]; i++) {
+		for (var i = 0; i < data.usage.length; i++) {
 			const usage = data.usage[i]
 			const isDanger = usage?.cpu > 0.93 || usage?.mem > 0.9 || usage?.hdd > 0.93
 			const isWarning = usage?.cpu > 0.84 || usage?.mem > 0.8 || usage?.hdd > 0.84

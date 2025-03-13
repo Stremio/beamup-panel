@@ -62,8 +62,7 @@ export default function ProjectUsage() {
 	let current = ''
 
 	let obj = {}
-
-	for (var i = 0; projectUsage[i]; i++) {
+	for (var i = 0; i < projectUsage.length; i++) {
 		const d = new Date(projectUsage[i].timestamp)
 		const dateString = addZero(d.getDate()) + '/' + addZero(d.getMonth()+1) + '/' + d.getFullYear()
 		projectUsage[i].cpu = parseFloat(projectUsage[i].cpu) / 100
@@ -89,7 +88,7 @@ export default function ProjectUsage() {
 	days.forEach(data => {
 		const parts = []
 		let obj = {}
-		for (var i = 0; data.usage[i]; i++) {
+		for (var i = 0; i < data.usage.length; i++) {
 			const usage = data.usage[i]
 			const isDanger = usage?.cpu > 0.93 || usage?.mem > 0.9
 			const isWarning = usage?.cpu > 0.84 || usage?.mem > 0.8

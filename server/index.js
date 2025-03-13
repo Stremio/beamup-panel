@@ -9,6 +9,7 @@ const { client_id, client_secret } = require("./config");
 const githubRestApi = require('./githubRestApi')
 const sessions = require('./sessions')
 
+const getSSHCommand = require('./getSSHCommand');
 const getGeneralUsage = require('./getGeneralUsage')
 
 const config = require("./config");
@@ -51,14 +52,14 @@ app.get('/login', (req, res) => {
     }
 });
 
-app.get('/getUserInfo', protected, async (req, res) => {
+app.get('/getUserInfo', protectedRoute, async (req, res) => {
     const userData = res.locals.userData;
     return res.status(200).json({
         ...userData,
     });
 });
 
-function protected(req, res, next) {
+function protectedRoute(req, res, next) {
     // Check for valid session
     res.locals.userData = sessions.get(req.session?.token);
     if (res.locals.userData) {
@@ -69,7 +70,7 @@ function protected(req, res, next) {
     }
 }
 
-app.get('/getProjects', protected, async (req, res) => {
+app.get('/getProjects', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
 
     try {
@@ -79,9 +80,9 @@ app.get('/getProjects', protected, async (req, res) => {
     }
 });
 
-let lastServerUsage = {}
+let lastServerUsage = []
 
-app.get('/getLastServerUsage', protected, async (req, res) => {
+app.get('/getLastServerUsage', protectedRoute, async (req, res) => {
     return res.status(200).json(lastServerUsage)
 })
 
@@ -106,7 +107,7 @@ app.get('/getServerUsage', async (req, res) => {
     return res.status(200).json(serverUsageHistory[srv])
 })
 
-app.get('/getProjectUsage', protected, async (req, res) => {
+app.get('/getProjectUsage', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
@@ -126,6 +127,7 @@ app.get('/getProjectUsage', protected, async (req, res) => {
                     projectUsage.push(el)
                     return true
                 }
+                return false
             })
         })
         return res.status(200).json(projectUsage)
@@ -138,16 +140,14 @@ function userHasProject(login, proj) {
     return login && proj && proj.startsWith(getUserHash(login)+'-') && projects.find(el => el.name === proj)
 }
 
-app.get('/getLogs', protected, async (req, res) => {
+app.get('/getLogs', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        // 'docker service logs --raw -t beamup_1fe84bc728af-rpdb'
-        // must prefix proj name with `beamup_`
-        const spw = cp.spawn(
-            'docker', ['service', 'logs', '--raw', '-t', `beamup_${proj}`]
-            )
 
+        const {command, args} = getSSHCommand(config.node_manager, `project-logs ${proj}`, false)
+        const spw = cp.spawn(command, args)
+        
         const send = (data) => {
           res.write(data.toString() + '\n')
         }
@@ -170,7 +170,7 @@ app.get('/getLogs', protected, async (req, res) => {
 
 const deleting = [];
 
-app.get('/doDelete', protected, async (req, res) => {
+app.get('/doDelete', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
@@ -221,7 +221,7 @@ app.get('/doDelete', protected, async (req, res) => {
     }
 });
 
-app.get('/doRestart', protected, async (req, res) => {
+app.get('/doRestart', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
@@ -238,8 +238,7 @@ app.get('/doRestart', protected, async (req, res) => {
             respond(null, '/')
         }, 5000);
         // ssh stremio-beamup-swarm-0 project-update 1fe84bc728af-rpdb
-        cp.exec(
-            `ssh ${config.manager_node} project-update ${proj}`,
+        cp.exec(getSSHCommand(config.node_manager, `project-update ${proj}`),
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`err: ${err} ${err.message} ${err.toString()}`);
@@ -294,7 +293,7 @@ function auth(req, res) {
             // Request to return data of a user that has been authenticated
             const userData = await githubRestApi.getUserData(access_token);
 
-            const allowed = ['jaruba'];
+            // const allowed = ['jaruba'];
 
             if (projects.find(proj => (proj.name || '').startsWith(getUserHash(userData.login)))) {
                 // has deployment on beamup
@@ -304,7 +303,7 @@ function auth(req, res) {
                     avatar_url: userData.avatar_url,
                     name: userData.name,
                 });
-
+                
                 req.session.token = userToken;
                 return res.redirect('/');
             } else {
@@ -346,14 +345,16 @@ const logUsage = () => {
             serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'servers_usage_history.json'))
         } catch(e) {}
         const generalUsage = await getGeneralUsage(deleting)
+        projects = generalUsage.projects;
         const serversUsage = generalUsage.servers
-        for (let i = 0; i++; serversUsage[i]) {
-            serverUsage[i].timestamp = Date.now()
-            if (!serverUsageHistory[i]) serverUsageHistory[i] = []
-            serverUsageHistory[i].unshift(serverUsage)
+        for (let i = 0; i < serversUsage.length; i++) {
+            serversUsage[i].timestamp = Date.now()
+            const serverIndex = serversUsage[i].serverIndex;
+            if (!serverUsageHistory[serverIndex]) serverUsageHistory[serverIndex] = []
+            serverUsageHistory[serverIndex].unshift(serversUsage[i]);
             const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.usage_interval) * config.server_usage_history_days
-            if (serverUsageHistory[i].length > maxEntries) {
-                serverUsageHistory[i] = serverUsageHistory[i].slice(0, maxEntries)
+            if (serverUsageHistory[serverIndex].length > maxEntries) {
+                serverUsageHistory[serverIndex] = serverUsageHistory[serverIndex].slice(0, maxEntries)
             }
         }
         lastServerUsage = serversUsage

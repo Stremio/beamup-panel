@@ -17,7 +17,11 @@ const config = {
   usage_interval: 5 * 60 * 1000, // 5s
   server_usage_history_days: 7,
   project_usage_history_days: 3,
-  manager_node: process.env.MANAGER_NODE || 'stremio-beamup-swarm-0',
+  node_manager: process.env.NODE_MANAGER || 'stremio-beamup-swarm-0',
+  node_prefix: process.env.NODE_PREFIX || 'stremio-beamup-swarm-',
+  node_ssh_user: process.env.NODE_USER || 'beamup',
+  node_ssh_key: process.env.NODE_SSH_KEY || '/home/dokku/.ssh/id_ed25519_sync',
+  node_ssh_port: process.env.NODE_SSH_PORT
 };
 
 const envVarsSchema = Joi.object({
@@ -32,7 +36,11 @@ const envVarsSchema = Joi.object({
   usage_interval: Joi.number().required(),
   server_usage_history_days: Joi.number().required(),
   project_usage_history_days: Joi.number().required(),
-  manager_node: Joi.string().required(),
+  node_manager: Joi.string().required(),
+  node_prefix: Joi.string().required(),
+  node_ssh_user: Joi.string().required(),
+  node_ssh_key: Joi.string(),
+  node_ssh_port: Joi.string(),
 });
 
 const { error } = envVarsSchema.validate(config);
