@@ -33,7 +33,19 @@
 	}
 }
 
-.serverUsageTop {
+.serverStatusTitle {
+	margin: 2rem 0;
+}
+
+.hiddenTab {
+	display: none;
+}
+
+.shownTab {
+	display: contents;
+}
+
+.navMenu {
 	margin: 0;
 	padding: 0;
 	border-radius: 5px;
@@ -46,37 +58,32 @@
 	color: black;
 	text-decoration: none;
 
-	.serverUsageHeaderNoBorder {
-		padding: 10px;
-		text-align: left;
-		margin-left: 10px;
-		max-width: calc(100% - 20px);
+	padding: 10px 0;
+
+	text-align: center;
+
+	.normalLink {
+		padding: 0 10px;
+		margin: 0 10px;
+		color: black;
+		text-decoration: none;
 	}
 
-	.serverUsageLabel {
-        float: right;
-        display: inline-block;
-        padding: 0.45rem;
-        border-radius: 1rem;
-        background-color: transparent;
-        font-size: var(--font-size-small);
-        font-weight: var(--font-weight-semi-mid);
-        text-align: center;
-        cursor: pointer;
-        background: #313339;
-        color: white;
-        border: 2px solid #313339;
-        opacity: 0.6;
-        margin-top: 5px;
-        margin-right: 20px;
-        &:hover {
-            color: #313339;
-            background: transparent;
-            border: 2px solid #313339;
-            opacity: 0.5;
-        }
+	.normalLink:hover {
+		text-decoration: underline;
 	}
 
+	.boldLink {
+		padding: 0 10px;
+		margin: 0 10px;
+		color: black;
+		text-decoration: none;
+		font-weight: bold;
+	}
+
+	.boldLink:hover {
+		text-decoration: none;
+	}
 }
 
 .serverUsage {
@@ -93,7 +100,7 @@
 	color: black;
 	text-decoration: none;
 
-	margin-top: 20px;
+	margin-bottom: 20px;
 
 	.serverUsageHeader {
 		padding: 10px;
