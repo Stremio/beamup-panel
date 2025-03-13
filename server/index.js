@@ -187,7 +187,6 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
 
         const testString = "Successfully deleted addon";
         const send = (data) => {
-            console.log(data);
           res.write(data.toString() + '\n')
           if(data.toString().includes(testString)){
             projects = projects.filter(el => el.name !== proj);
