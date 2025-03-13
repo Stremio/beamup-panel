@@ -1,7 +1,7 @@
 const config = require('./config');
 
 function getSSHCommand(nodeHost, command, string=true) {
-    let SSH_command = ['ssh', '-T'] 
+    let SSH_command = ['ssh', '-T', '-q'] 
     if (config.node_ssh_key) {
         SSH_command.push('-i');
         SSH_command.push(config.node_ssh_key);
