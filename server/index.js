@@ -195,7 +195,8 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
         }
 
         res.set({
-          'Content-Type': 'text/plain',
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Transfer-Encoding': 'chunked'
         })
 
         spw.stdout.on('data', send)
@@ -337,11 +338,12 @@ const logUsage = () => {
         const serversUsage = generalUsage.servers
         for (let i = 0; i < serversUsage.length; i++) {
             serversUsage[i].timestamp = Date.now()
-            if (!serverUsageHistory[i]) serverUsageHistory[i] = []
-            serverUsageHistory[i].unshift(serversUsage[i]);
+            const serverIndex = serversUsage[i].serverIndex;
+            if (!serverUsageHistory[serverIndex]) serverUsageHistory[serverIndex] = []
+            serverUsageHistory[serverIndex].unshift(serversUsage[i]);
             const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.usage_interval) * config.server_usage_history_days
-            if (serverUsageHistory[i].length > maxEntries) {
-                serverUsageHistory[i] = serverUsageHistory[i].slice(0, maxEntries)
+            if (serverUsageHistory[serverIndex].length > maxEntries) {
+                serverUsageHistory[serverIndex] = serverUsageHistory[serverIndex].slice(0, maxEntries)
             }
         }
         lastServerUsage = serversUsage
