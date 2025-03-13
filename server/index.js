@@ -144,10 +144,10 @@ app.get('/getLogs', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        // 'docker service logs --raw -t beamup_1fe84bc728af-rpdb'
-        // must prefix proj name with `beamup_`
-        const spw = cp.spawn(getSSHCommand(config.node_manager, `project-logs ${proj}`))
 
+        const {command, args} = getSSHCommand(config.node_manager, `project-logs ${proj}`, false)
+        const spw = cp.spawn(command, args)
+        
         const send = (data) => {
           res.write(data.toString() + '\n')
         }
