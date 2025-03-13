@@ -185,7 +185,7 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
 
         const spw = cp.spawn('beamup-delete-addon' ,['--force', proj])
 
-        const testString = "Successfully deleted addon";
+        const testString = "Addon removal process completed successfully";
         const send = (data) => {
           res.write(data.toString() + '\n')
           if(data.toString().includes(testString)){
