@@ -92,8 +92,8 @@ const getGeneralUsage = (deleting) => {
         let projects = []
         for (let i = 0; i < nodes.length; i++) {
         	const serverData = await getServerUsage(config.node_prefix + i)
-            serverData.serverIndex = i;
         	if (serverData) {
+                serverData.serverIndex = i;
             	if (Array.isArray(serverData.containers) && serverData.containers.length) {
             		const containers = serverData.containers.filter(el => !!el['MemPerc'])
             		projects = projects.concat(containers)
@@ -130,7 +130,7 @@ const getGeneralUsage = (deleting) => {
                             const total = parseInt(parts[3].split('/')[1])
                             const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
                             const project = projects.find(el => {
-                                return el.Name === "beamup_" + name
+                                return el.Name === name
                             })
                             if(!project){
                                 return tempProjects.push({ id: parts[0], replicas, name, status });
