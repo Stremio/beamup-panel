@@ -3,6 +3,7 @@ const slack = require('./slack')
 const getSwarmNodes = require('./getSwarmNodes');
 const config = require('./config');
 const getSSHCommand = require('./getSSHCommand');
+const deletingState = require('./deletingState');
 
 function get3largestIdx(arr) {
     let fst = -Infinity, sec = -Infinity, thd = -Infinity
@@ -83,7 +84,7 @@ const getServerUsage = (nodeHost) => {
 	})	
 }
 
-const getGeneralUsage = (deleting) => {
+const getGeneralUsage = () => {
 	return new Promise(async (resolve) => {
 
 		const nodes = await getSwarmNodes()
@@ -128,7 +129,7 @@ const getGeneralUsage = (deleting) => {
                             const replicas = parts[3] || ''
                             const running = parseInt(parts[3].split('/')[0])
                             const total = parseInt(parts[3].split('/')[1])
-                            const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
+                            const status = deletingState.has(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
                             const project = projects.find(el => {
                                 return el.Name === name
                             })
@@ -153,6 +154,15 @@ const getGeneralUsage = (deleting) => {
                         
                         
                         })
+                    }
+                    // check if project any project was deleted
+                    const deleting = deletingState.getAll()
+                    for (let i = 0; i < deleting.length; i++) {
+                        const foundProj = tempProjects.find(el => {
+                            return el.name === deleting[i]
+                        })
+                        if (!foundProj)
+                            deletingState.remove(deleting[i])
                     }
                     resolve({ servers, projects: tempProjects })
                 })

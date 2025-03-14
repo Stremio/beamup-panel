@@ -168,38 +168,32 @@ app.get('/getLogs', protectedRoute, async (req, res) => {
     }
 });
 
-const deleting = [];
+const deletingState = require('./deletingState')
 
 app.get('/doDelete', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        deleting.push(proj);
+        deletingState.add(proj);
         projects.find(el => {
             if (el.name === proj) {
                 el.status = 'deleting'
             }
         });
 
-        function removeFromDeleting() {
-            const index = deleting.indexOf(proj)
-            if (index !== -1)
-              deleting.splice(index, 1)
-        }
-
         cp.exec(
             `/usr/local/bin/beamup-delete-addon --force "${proj}"`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
-                    removeFromDeleting()
+                    deletingState.remove(proj)
                     res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
                     return;
                 }
 
                 if (stderr) {
                     console.log(`addon remove stderr: ${stderr}`);
-                    removeFromDeleting()
+                    deletingState.remove(proj)
                     res.status(500).json({ errMessage: stderr })
                     return;
                 }
@@ -211,7 +205,7 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
                 res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
 
                 setTimeout(() => {
-                    removeFromDeleting()
+                    deletingState.remove(proj)
                 }, 2 * 60 * 60 * 1000) // consider the project deleted after 2 mins
             }
         );
@@ -344,7 +338,7 @@ const logUsage = () => {
         try {
             serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'servers_usage_history.json'))
         } catch(e) {}
-        const generalUsage = await getGeneralUsage(deleting)
+        const generalUsage = await getGeneralUsage()
         projects = generalUsage?.projects || projects;
         const serversUsage = generalUsage.servers
         for (let i = 0; i < serversUsage.length; i++) {
