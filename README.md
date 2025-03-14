@@ -17,75 +17,18 @@ npm run build
 ```
 
 
-## Production deployment
+## Production Deployment
 
-For production mode you need the following variables set either in `.env` file or exported to the environment:
+For a detailed production setup guide, see [PRODUCTION_SETUP.md](PRODUCTION_SETUP.md).
 
-```sh
-NODE_ENV=production
-CLIENT_ID=The GitHub Client ID
-CLIENT_SECRET=The GitHub Client secret
-SLACK_WEBHOOK=https://hooks.slack.com/services/...
-SLACK_CHANNEL=H190TA7TKD2
-SERVER_PORT=4000
-```
-
-
-### Service Setup
-
-1. To set up the application as a service, copy the `scripts/beamup-panel.service` file to `/etc/systemd/system/`.
-2. Edit the file to update the paths according to your setup.
-3. Enable and start the service:
+### Quick Setup Summary:
+1. **Set up environment variables** in `.env`
+2. **Set up system services (`systemd`)** and Nginx reverse proxy
+3. **Configure firewall and sudo permissions**
+4. **Deploy the application** (as `dokku` user):  
+   ```sh
+   sudo -u dokku bash -c 'cd /opt/beamup-panel && ./scripts/production-deploy.sh'
    ```
-   sudo systemctl daemon-reload
-   sudo systemctl enable beamup-panel.service
-   sudo systemctl start beamup-panel.service
-   ```
-
-### Updating the Application
-
-Use the `scripts/production-deploy.sh` script to deploy updates to the application:
-
-1. Make the script executable:
-   ```
-   chmod +x scripts/production-deploy.sh
-   ```
-2. Run the script to deploy updates:
-   ```
-   ./scripts/production-deploy.sh
-   ```
-
-This script will pull the latest changes from the repository, install dependencies, build the application, and restart the service.
-The user must have permissions to restart the service, this can be done by adding a line like this with `visudo`:
-```
-beamup ALL=(ALL) NOPASSWD: /bin/systemctl restart beamup-panel.service
-beamup ALL=(ALL) NOPASSWD: /bin/systemctl restart nginx
-```
-
-### Nginx config example to use as a Proxy
-```
-server {
-    listen 80;
-    server_name beamup.dev;
-
-    location / {
-        proxy_pass http://localhost:4000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-This can be saved in /etc/nginx/sites-available/ with a symbolic link in /etc/nginx/sites-enabled/
-### Firewall config
-To configure the firewall as configured in stremio-beamup, and following same example, this commands should suffice
-```
-sudo iptables -A INPUT -p tcp --dport 4000 -j ACCEPT
-netfilter-persistent save
-```
-
 
 ## Local Testing
 

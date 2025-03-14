@@ -30,13 +30,24 @@ function fill(obj) {
 export default function ServerUsage() {
 	const { serverUsage } = useServerUsage();
 
+	const [dt, setDt] = React.useState({ server: 0 });
+
+	React.useEffect(() => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const srv = parseInt(searchParams.get('server') || 0);
+
+		if (srv) {
+			setDt((dt) => { return { ...dt, server: srv }; });
+		}
+	}, []);
+
 	const days = []
 
 	let current = ''
 
 	let obj = {}
 
-	for (var i = 0; serverUsage[i]; i++) {
+	for (var i = 0; i < serverUsage.length; i++) {
 		const d = new Date(serverUsage[i].timestamp)
 		const dateString = addZero(d.getDate()) + '/' + addZero(d.getMonth()+1) + '/' + d.getFullYear()
 		if (current !== dateString) {
@@ -60,7 +71,7 @@ export default function ServerUsage() {
 	days.forEach(data => {
 		const parts = []
 		let obj = {}
-		for (var i = 0; data.usage[i]; i++) {
+		for (var i = 0; i < data.usage.length; i++) {
 			const usage = data.usage[i]
 			const isDanger = usage?.cpu > 0.93 || usage?.mem > 0.9 || usage?.hdd > 0.93
 			const isWarning = usage?.cpu > 0.84 || usage?.mem > 0.8 || usage?.hdd > 0.84
@@ -110,7 +121,7 @@ export default function ServerUsage() {
 			<div className={styles.tasksContainer}>
 				<a href={'/'} className={styles.titleHref}><h1 className={styles.heading}>BeamUp</h1></a>
 				<div className={styles.serverUsage}>
-					<div className={styles.serverUsageHeader}>Current Status</div>
+					<div className={styles.serverUsageHeader}>{`Server ${dt.server+1}: Current Status`}</div>
 					<div className={styles.serverUsageTabHolder}>
 						<div className={`${styles.serverUsageTab} ${styles['serverUsage' + (lastServerUsage?.cpu ? (lastServerUsage.cpu > 0.93 ? 'Red' : lastServerUsage.cpu > 0.84 ? 'Yellow' : 'Green') : 'Gray') ]}`}>
 							<div className={styles.sameHeight}></div>

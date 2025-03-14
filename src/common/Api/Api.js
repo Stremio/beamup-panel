@@ -19,13 +19,13 @@ const request = async (path) => {
 const getUserInfo = () => request('/getUserInfo');
 const getProjects = () => request('/getProjects');
 const getLastServerUsage = () => request('/getLastServerUsage');
-const getServerUsage = () => request('/getServerUsage');
+const getServerUsage = (srv) => request('/getServerUsage?server=' + srv);
 const getProjectUsage = (proj) => request('/getProjectUsage?proj=' + encodeURIComponent(proj));
 
 const ApiProvider = ({ children, onAuthError }) => {
 	const [user, setUser] = useState({});
 	const [projects, setProjects] = useState([]);
-	const [lastServerUsage, setLastServerUsage] = useState({});
+	const [lastServerUsage, setLastServerUsage] = useState([]);
 
 	const initializeApi = async () => {
 		getUserInfo()
@@ -61,7 +61,7 @@ const ServerUsageProvider = ({ children }) => {
 	const [serverUsage, setServerUsage] = useState([]);
 
 	const initializeApi = async () => {
-		getServerUsage().then(setServerUsage);
+		getServerUsage((new URLSearchParams(window.location.search)).get('server')).then(setServerUsage);
 	};
 
 	useEffect(() => {

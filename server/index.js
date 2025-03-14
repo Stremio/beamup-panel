@@ -8,9 +8,9 @@ const fs = require('fs')
 const { client_id, client_secret } = require("./config");
 const githubRestApi = require('./githubRestApi')
 const sessions = require('./sessions')
-const slack = require('./slack')
 
-const getServerUsage = require('./getServerUsage')
+const getSSHCommand = require('./getSSHCommand');
+const getGeneralUsage = require('./getGeneralUsage')
 
 const config = require("./config");
 
@@ -52,14 +52,14 @@ app.get('/login', (req, res) => {
     }
 });
 
-app.get('/getUserInfo', protected, async (req, res) => {
+app.get('/getUserInfo', protectedRoute, async (req, res) => {
     const userData = res.locals.userData;
     return res.status(200).json({
         ...userData,
     });
 });
 
-function protected(req, res, next) {
+function protectedRoute(req, res, next) {
     // Check for valid session
     res.locals.userData = sessions.get(req.session?.token);
     if (res.locals.userData) {
@@ -70,30 +70,30 @@ function protected(req, res, next) {
     }
 }
 
-app.get('/getProjects', protected, async (req, res) => {
+app.get('/getProjects', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
 
     try {
-        await getProjects()
         return res.status(200).json(projects.filter(proj => userHasProject(login, proj.name)))
     } catch (e) {
         return res.status(500).json({ errMessage: (e || {}).message || 'Unknown Error' });
     }
 });
 
-let lastServerUsage = {}
+let lastServerUsage = []
 
-app.get('/getLastServerUsage', protected, async (req, res) => {
+app.get('/getLastServerUsage', protectedRoute, async (req, res) => {
     return res.status(200).json(lastServerUsage)
 })
 
 app.get('/getServerUsage', async (req, res) => {
+    const srv = parseInt(req.query.server);
     let serverUsageHistory = []
     try {
-        serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
+        serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'servers_usage_history.json'))
     } catch(e) {}
-    if (!serverUsageHistory.length) {
-        serverUsageHistory = [
+    if (!serverUsageHistory[srv] || !serverUsageHistory[srv].length) {
+        const dummySrvData = [
             {
                 mem: 0,
                 swap: 0,
@@ -102,11 +102,12 @@ app.get('/getServerUsage', async (req, res) => {
                 timestamp: Date.now(),
             }
         ]
+        return res.status(200).json(dummySrvData)
     }
-    return res.status(200).json(serverUsageHistory)
+    return res.status(200).json(serverUsageHistory[srv])
 })
 
-app.get('/getProjectUsage', protected, async (req, res) => {
+app.get('/getProjectUsage', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
@@ -126,6 +127,7 @@ app.get('/getProjectUsage', protected, async (req, res) => {
                     projectUsage.push(el)
                     return true
                 }
+                return false
             })
         })
         return res.status(200).json(projectUsage)
@@ -138,16 +140,14 @@ function userHasProject(login, proj) {
     return login && proj && proj.startsWith(getUserHash(login)+'-') && projects.find(el => el.name === proj)
 }
 
-app.get('/getLogs', protected, async (req, res) => {
+app.get('/getLogs', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        // 'docker service logs --raw -t beamup_1fe84bc728af-rpdb'
-        // must prefix proj name with `beamup_`
-        const spw = cp.spawn(
-            'docker', ['service', 'logs', '--raw', '-t', `beamup_${proj}`]
-            )
 
+        const {command, args} = getSSHCommand(config.node_manager, `project-logs ${proj}`, false)
+        const spw = cp.spawn(command, args)
+        
         const send = (data) => {
           res.write(data.toString() + '\n')
         }
@@ -168,27 +168,72 @@ app.get('/getLogs', protected, async (req, res) => {
     }
 });
 
-const deleting = [];
+const deletingState = require('./deletingState')
 
-app.get('/doDelete', protected, async (req, res) => {
+app.get('/doDelete', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        // send slack message about deletion request
-        deleting.push(proj);
+        deletingState.add(proj);
+        let lastKnownStatus = 'running'
         projects.find(el => {
             if (el.name === proj) {
+                lastKnownStatus = el.status
                 el.status = 'deleting'
+                return true
             }
+            return false
         });
-        slack.say(`${req.query.domain}: project ${proj} was requested for deletion`)
-        return res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
+
+        cp.exec(
+            `/usr/local/bin/beamup-delete-addon --force "${proj}"`,
+            (err, stdout, stderr) => {
+                if (err) {
+                    console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
+                    deletingState.remove(proj)
+                    projects.find(el => {
+                        if (el.name === proj) {
+                            el.status = lastKnownStatus
+                            return true
+                        }
+                        return false
+                    });
+                    res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
+                    return;
+                }
+
+                if (stderr) {
+                    console.log(`addon remove stderr: ${stderr}`);
+                    deletingState.remove(proj)
+                    projects.find(el => {
+                        if (el.name === proj) {
+                            el.status = lastKnownStatus
+                            return true
+                        }
+                        return false
+                    });
+                    res.status(500).json({ errMessage: stderr })
+                    return;
+                }
+
+                if (stdout) {
+                    console.log(`addon remove stdout: ${stdout}`);
+                }
+
+                res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
+
+                setTimeout(() => {
+                    deletingState.remove(proj)
+                }, 2 * 60 * 60 * 1000) // consider the project deleted after 2 mins
+            }
+        );
+        return;
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
 });
 
-app.get('/doRestart', protected, async (req, res) => {
+app.get('/doRestart', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
@@ -204,10 +249,8 @@ app.get('/doRestart', protected, async (req, res) => {
         let redirectTimeout = setTimeout(() => {
             respond(null, '/')
         }, 5000);
-        // 'docker service update --force beamup_1fe84bc728af-rpdb'
-        // must prefix proj name with `beamup_`
-        cp.exec(
-            `docker service update --force beamup_${proj}`,
+        // ssh stremio-beamup-swarm-0 project-update 1fe84bc728af-rpdb
+        cp.exec(getSSHCommand(config.node_manager, `project-update ${proj}`),
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`err: ${err} ${err.message} ${err.toString()}`);
@@ -235,96 +278,6 @@ app.get('/doRestart', protected, async (req, res) => {
 
 let projects = []
 
-let lastTime = 0
-
-function getProjects() {
-    if (lastTime < Date.now() - config.projects_cache_time) {
-        // 'docker service ls'
-
-        return new Promise((resolve, reject) => {
-            cp.exec(
-                `docker service ls`,
-                (err, stdout, stderr) => {
-
-                    if (err) {
-                        console.log(`err: ${err} ${err.message} ${err.toString()}`)
-                        return resolve()
-                    }
-
-                    if (stderr) {
-                        console.log('stderr')
-                        console.log(stderr)
-                        return resolve()
-                    }
-
-                    if (stdout) {
-
-                        const tempProjects = []
-
-                        stdout.split(String.fromCharCode(10)).forEach((line, count) => {
-                            if (count && line) { // ignore first line
-                                const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
-                                const name = parts[1].split('.')[0].replace('beamup_', '')
-                                const replicas = parts[3] || ''
-                                const running = parseInt(parts[3].split('/')[0])
-                                const total = parseInt(parts[3].split('/')[1])
-                                const status = deleting.includes(name) ? 'deleting' : replicas.startsWith('0/') || running < total ? 'failing' :  'running'
-                                tempProjects.push({ id: parts[0], replicas, name, status })
-                            }
-                        })
-
-                        cp.exec(
-                            `docker stats --no-stream`,
-                            (err, stdout, stderr) => {
-                                if (err) {
-                                    console.log(`err: ${err} ${err.message} ${err.toString()}`)
-                                    return resolve()
-                                }
-
-                                if (stderr) {
-                                    console.log('stderr')
-                                    console.log(stderr)
-                                    return resolve()
-                                }
-
-                                if (stdout) {
-                                    stdout.split(String.fromCharCode(10)).forEach((line, count) => {
-                                        if (count && line) { // ignore first line
-                                            const parts = line.replace(/[ \t]{2,}/g, '||').split('||')
-                                            const name = parts[1].split('.')[0].replace('beamup_', '')
-                                            tempProjects.find((el, ij) => {
-                                                if (el.name === name) {
-                                                    tempProjects[ij].serviceId = parts[0]
-                                                    tempProjects[ij].cpu = parts[2]
-                                                    tempProjects[ij].memUsage = parts[3]
-                                                    tempProjects[ij].memPerc = parts[4]
-                                                    tempProjects[ij].netIO = parts[5]
-                                                    tempProjects[ij].blockIO = parts[6]
-                                                }
-                                            })
-                                        }
-                                    })
-
-                                    projects = tempProjects
-
-                                    lastTime = Date.now()
-
-                                    return resolve(projects)
-                                }
-
-                                return resolve()
-
-                            }
-                        )
-                    }
-                }
-            )
-        })
-    }
-
-    return Promise.resolve(projects)
-}
-
 const SHA256 = require('crypto-js/sha256')
 
 function getUserHash(githubLogin) {
@@ -345,7 +298,6 @@ function auth(req, res) {
     })
         .then((response) => response.text())
         .then(async (paramsString) => {
-            await getProjects()
 
             let params = new URLSearchParams(paramsString);
             const access_token = params.get('access_token');
@@ -353,7 +305,7 @@ function auth(req, res) {
             // Request to return data of a user that has been authenticated
             const userData = await githubRestApi.getUserData(access_token);
 
-            const allowed = ['jaruba'];
+            // const allowed = ['jaruba'];
 
             if (projects.find(proj => (proj.name || '').startsWith(getUserHash(userData.login)))) {
                 // has deployment on beamup
@@ -363,7 +315,7 @@ function auth(req, res) {
                     avatar_url: userData.avatar_url,
                     name: userData.name,
                 });
-
+                
                 req.session.token = userToken;
                 return res.redirect('/');
             } else {
@@ -398,56 +350,48 @@ app.listen(PORT, () => {
 
 const sessionsFolder = config.sessions_folder || '../'
 
-const logServerUsage = () => {
+const logUsage = () => {
     async function updateServerUsage() {
         let serverUsageHistory = []
         try {
-            serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'server_usage_history.json'))
+            serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'servers_usage_history.json'))
         } catch(e) {}
-        const serverUsage = await getServerUsage()
-        serverUsage.timestamp = Date.now()
-        lastServerUsage = serverUsage
-        serverUsageHistory.unshift(serverUsage)
-        const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.server_usage_interval) * config.server_usage_history_days
-        if (serverUsageHistory.length > maxEntries) {
-            serverUsageHistory = serverUsageHistory.slice(0, maxEntries)
+        const generalUsage = await getGeneralUsage()
+        projects = generalUsage?.projects || projects;
+        const serversUsage = generalUsage.servers
+        for (let i = 0; i < serversUsage.length; i++) {
+            serversUsage[i].timestamp = Date.now()
+            const serverIndex = serversUsage[i].serverIndex;
+            if (!serverUsageHistory[serverIndex]) serverUsageHistory[serverIndex] = []
+            serverUsageHistory[serverIndex].unshift(serversUsage[i]);
+            const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.usage_interval) * config.server_usage_history_days
+            if (serverUsageHistory[serverIndex].length > maxEntries) {
+                serverUsageHistory[serverIndex] = serverUsageHistory[serverIndex].slice(0, maxEntries)
+            }
         }
-        fs.writeFileSync(sessionsFolder + 'server_usage_history.json', JSON.stringify(serverUsageHistory))
+        lastServerUsage = serversUsage
+        fs.writeFileSync(sessionsFolder + 'servers_usage_history.json', JSON.stringify(serverUsageHistory))
+        if (Array.isArray(projects) && projects.length) {
+            projects = generalUsage.projects
+            let projectUsageHistory = []
+            try {
+                projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
+            } catch(e) {}
+            projectUsageHistory.unshift({
+                timestamp: Date.now(),
+                snapshot: projects,
+            })
+            const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.usage_interval) * config.project_usage_history_days
+            if (projectUsageHistory.length > maxEntries) {
+                projectUsageHistory = projectUsageHistory.slice(0, maxEntries)
+            }
+            fs.writeFileSync(sessionsFolder + 'project_usage_history.json', JSON.stringify(projectUsageHistory))
+        }
     }
     updateServerUsage()
     setTimeout(() => {
-        logServerUsage()
-    }, config.server_usage_interval)
+        logUsage()
+    }, config.usage_interval)
 }
 
-logServerUsage()
-
-const logProjectUsage = () => {
-    async function updateProjectUsage() {
-        let projectUsageHistory = []
-        try {
-            projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
-        } catch(e) {}
-        try {
-            await getProjects()
-        } catch (e) {
-            return res.status(500).json({ errMessage: (e || {}).message || 'Unknown Error' });
-        }
-        projectUsageHistory.unshift({
-            timestamp: Date.now(),
-            snapshot: projects,
-        })
-        const maxEntries = ((1 * 24 * 60 * 60 * 1000) / config.project_usage_interval) * config.project_usage_history_days
-        if (projectUsageHistory.length > maxEntries) {
-            projectUsageHistory = projectUsageHistory.slice(0, maxEntries)
-        }
-        fs.writeFileSync(sessionsFolder + 'project_usage_history.json', JSON.stringify(projectUsageHistory))
-    }
-    updateProjectUsage()
-    setTimeout(() => {
-        logProjectUsage()
-    }, config.project_usage_interval)
-}
-
-logProjectUsage()
-
+logUsage()
