@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=beamup
+User=dokku
 WorkingDirectory=/home/beamup/beamup-panel
 ExecStart=/usr/bin/node server/index.js
 Restart=on-failure
