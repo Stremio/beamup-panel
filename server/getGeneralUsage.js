@@ -155,7 +155,7 @@ const getGeneralUsage = () => {
                         
                         })
                     }
-                    // check if project any project was deleted
+                    // check if any project was deleted
                     const deleting = deletingState.getAll()
                     for (let i = 0; i < deleting.length; i++) {
                         const foundProj = tempProjects.find(el => {
