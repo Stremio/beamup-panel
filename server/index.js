@@ -175,10 +175,14 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
         deletingState.add(proj);
+        let lastKnownStatus = 'running'
         projects.find(el => {
             if (el.name === proj) {
+                lastKnownStatus = el.status
                 el.status = 'deleting'
+                return true
             }
+            return false
         });
 
         cp.exec(
@@ -187,6 +191,13 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
                 if (err) {
                     console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
                     deletingState.remove(proj)
+                    projects.find(el => {
+                        if (el.name === proj) {
+                            el.status = lastKnownStatus
+                            return true
+                        }
+                        return false
+                    });
                     res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
                     return;
                 }
@@ -194,6 +205,13 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
                 if (stderr) {
                     console.log(`addon remove stderr: ${stderr}`);
                     deletingState.remove(proj)
+                    projects.find(el => {
+                        if (el.name === proj) {
+                            el.status = lastKnownStatus
+                            return true
+                        }
+                        return false
+                    });
                     res.status(500).json({ errMessage: stderr })
                     return;
                 }
