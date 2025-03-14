@@ -148,6 +148,7 @@ const getGeneralUsage = (deleting) => {
                                 memPerc: project.MemPerc,
                                 netIO: project.NetIO,
                                 blockIO: project.BlockIO,
+                                Size: project.Size,
                             })
                         
                         
