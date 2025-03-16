@@ -356,8 +356,11 @@ const logUsage = () => {
         try {
             serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'servers_usage_history.json'))
         } catch(e) {}
-        const generalUsage = await getGeneralUsage()
-        projects = generalUsage?.projects || projects;
+        const generalUsage = await getGeneralUsage(deleting)
+        if(!generalUsage){
+            // TODO: handle when the response is undefined or empty 
+        }
+        projects = generalUsage.projects
         const serversUsage = generalUsage.servers
         for (let i = 0; i < serversUsage.length; i++) {
             serversUsage[i].timestamp = Date.now()
