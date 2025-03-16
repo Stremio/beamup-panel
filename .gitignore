@@ -1,4 +1,6 @@
 .DS_Store
+bun.lockb
+sessions/*
 
 #custom news
 public/news*
