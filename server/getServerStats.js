@@ -5,13 +5,13 @@ function getServerStats(swarmNode) {
 	return new Promise((resolve, reject) => {
 		exec(getSSHCommand(swarmNode, 'server-stats'), (err, stdout, stderr) => {
 			if (err) {
-				return reject(err);
+				console.error(`Err: error getting server stats from ${swarmNode}`);
 			}
 			let stats = {};
 			try{
 				stats = JSON.parse(stdout);
 			}catch(err){
-				return reject(err);
+				console.error(`Err: error parsing server stats from ${swarmNode}`);
 			}
 			resolve(stats);
 		});
