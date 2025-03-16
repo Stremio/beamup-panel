@@ -168,50 +168,38 @@ app.get('/getLogs', protectedRoute, async (req, res) => {
     }
 });
 
-const deletingState = require('./deletingState')
+const deleting = [];
 
 app.get('/doDelete', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        deletingState.add(proj);
-        let lastKnownStatus = 'running'
+        deleting.push(proj);
         projects.find(el => {
             if (el.name === proj) {
-                lastKnownStatus = el.status
                 el.status = 'deleting'
-                return true
             }
-            return false
         });
+
+        function removeFromDeleting() {
+            const index = deleting.indexOf(proj)
+            if (index !== -1)
+              deleting.splice(index, 1)
+        }
 
         cp.exec(
             `/usr/local/bin/beamup-delete-addon --force "${proj}"`,
             (err, stdout, stderr) => {
                 if (err) {
                     console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
-                    deletingState.remove(proj)
-                    projects.find(el => {
-                        if (el.name === proj) {
-                            el.status = lastKnownStatus
-                            return true
-                        }
-                        return false
-                    });
+                    removeFromDeleting()
                     res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
                     return;
                 }
 
                 if (stderr) {
                     console.log(`addon remove stderr: ${stderr}`);
-                    deletingState.remove(proj)
-                    projects.find(el => {
-                        if (el.name === proj) {
-                            el.status = lastKnownStatus
-                            return true
-                        }
-                        return false
-                    });
+                    removeFromDeleting()
                     res.status(500).json({ errMessage: stderr })
                     return;
                 }
@@ -223,7 +211,7 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
                 res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
 
                 setTimeout(() => {
-                    deletingState.remove(proj)
+                    removeFromDeleting()
                 }, 2 * 60 * 60 * 1000) // consider the project deleted after 2 mins
             }
         );
