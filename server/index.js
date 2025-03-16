@@ -5,6 +5,7 @@ const fetch = require("node-fetch");
 const cookieSession = require('cookie-session')
 const cp = require('child_process')
 const fs = require('fs')
+const PATH = require('path')
 const { client_id, client_secret } = require("./config");
 const githubRestApi = require('./githubRestApi')
 const sessions = require('./sessions')
@@ -90,7 +91,7 @@ app.get('/getServerUsage', async (req, res) => {
     const srv = parseInt(req.query.server);
     let serverUsageHistory = []
     try {
-        serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'servers_usage_history.json'))
+        serverUsageHistory = JSON.parse(fs.readFileSync(PATH.join(sessionsFolder, 'servers_usage_history.json')))
     } catch(e) {}
     if (!serverUsageHistory[srv] || !serverUsageHistory[srv].length) {
         const dummySrvData = [
@@ -113,7 +114,7 @@ app.get('/getProjectUsage', protectedRoute, async (req, res) => {
     if (userHasProject(login, proj)) {
         let projectUsageHistory = []
         try {
-            projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
+            projectUsageHistory = JSON.parse(fs.readFileSync(PATH.join(sessionsFolder, 'project_usage_history.json')))
         } catch(e) {}
         if (!projectUsageHistory.length) {
             return res.status(500).json({ errMessage: 'No items in history' })
@@ -354,9 +355,9 @@ const logUsage = () => {
     async function updateServerUsage() {
         let serverUsageHistory = []
         try {
-            serverUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'servers_usage_history.json'))
+            serverUsageHistory = JSON.parse(fs.readFileSync(PATH.join(sessionsFolder, 'servers_usage_history.json')))
         } catch(e) {}
-        const generalUsage = await getGeneralUsage(deleting)
+        const generalUsage = await getGeneralUsage()
         if(!generalUsage){
             // TODO: handle when the response is undefined or empty 
         }
@@ -373,12 +374,12 @@ const logUsage = () => {
             }
         }
         lastServerUsage = serversUsage
-        fs.writeFileSync(sessionsFolder + 'servers_usage_history.json', JSON.stringify(serverUsageHistory))
+        fs.writeFileSync(PATH.join(sessionsFolder, 'servers_usage_history.json'), JSON.stringify(serverUsageHistory))
         if (Array.isArray(projects) && projects.length) {
             projects = generalUsage.projects
             let projectUsageHistory = []
             try {
-                projectUsageHistory = JSON.parse(fs.readFileSync(sessionsFolder + 'project_usage_history.json'))
+                projectUsageHistory = JSON.parse(fs.readFileSync(PATH.join(sessionsFolder, 'project_usage_history.json')))
             } catch(e) {}
             projectUsageHistory.unshift({
                 timestamp: Date.now(),
@@ -388,7 +389,7 @@ const logUsage = () => {
             if (projectUsageHistory.length > maxEntries) {
                 projectUsageHistory = projectUsageHistory.slice(0, maxEntries)
             }
-            fs.writeFileSync(sessionsFolder + 'project_usage_history.json', JSON.stringify(projectUsageHistory))
+            fs.writeFileSync(PATH.join(sessionsFolder, 'project_usage_history.json'), JSON.stringify(projectUsageHistory))
         }
     }
     updateServerUsage()

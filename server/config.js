@@ -13,7 +13,7 @@ const config = {
   projects_cache_time: 30 * 1000, // 30s
   session_expire: parseInt(process.env.SESSION_EXPIRE || 30 * 24 * 60 * 60 * 1000),
   session_refresh_interval: 60 * 1000,
-  sessions_folder: process.env.SESSIONS_FOLDER || '../',
+  sessions_folder: process.env.SESSIONS_FOLDER || '../sessions',
   usage_interval: 5 * 60 * 1000, // 5s
   server_usage_history_days: 7,
   project_usage_history_days: 3,
