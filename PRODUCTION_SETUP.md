@@ -10,7 +10,7 @@ This guide provides step-by-step instructions for setting up and deploying the B
 
 ### Install Required Packages
 ```sh
-sudo apt update && sudo apt install -y git curl nginx nodejs npm iptables-persistent
+sudo apt update && sudo apt install -y git curl nginx nodejs iptables-persistent
 ```
 
 ### Clone the Repository
@@ -67,7 +67,7 @@ sudo cp /opt/beamup-panel/scripts/beamup-panel.service /etc/systemd/system/
 ```
 2. Update the service file paths if necessary:
 ```sh
-sudo nano /etc/systemd/system/beamup-panel.service
+sudo vim /etc/systemd/system/beamup-panel.service
 ```
 3. Reload systemd, enable and start the service:
 ```sh
