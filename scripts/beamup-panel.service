@@ -9,6 +9,7 @@ WorkingDirectory=/opt/beamup-panel
 ExecStart=/usr/bin/node server/index.js
 Restart=on-failure
 RestartSec=60
+Environment="SESSIONS_FOLDER=/opt/beamup-panel/sessions/"
 
 [Install]
 WantedBy=multi-user.target

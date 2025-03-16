@@ -21,6 +21,13 @@ sudo chown -R dokku:dokku beamup-panel
 cd beamup-panel
 ```
 
+### Create the Sessions Directory
+
+sudo mkdir -p /opt/beamup-panel/sessions
+sudo chown dokku:dokku /opt/beamup-panel/sessions
+
+If using a different directory, update the env in the systemd service file accordingly.
+
 ## 2. DNS Configuration
 - **Set a DNS record in Cloudflare**: Ensure that the domain you plan to use is configured in Cloudflare with the **correct IP of the deployer server**.
 - **Update the domain settings** in the following places to match your intended domain:
