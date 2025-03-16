@@ -4,7 +4,7 @@
 set -e
 
 # Set the directory where your application is located
-APP_DIR="/home/beamup/beamup-panel"
+APP_DIR="/opt/beamup-panel"
 
 # Navigate to the application directory
 cd $APP_DIR
