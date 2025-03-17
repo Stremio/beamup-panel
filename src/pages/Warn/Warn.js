@@ -1,30 +1,67 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styles from './styles.module.scss';
+import { useStreamingResponse, useQueryParams } from './hooks/index';
 
 function capitalizeFirstLetter(string = 'yes') {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 export default function Home() {
-	const [data, setData] = useState({ project: '', actionType: '', agreeLink: '' });
+    const { project, actionType, agreeLink } = useQueryParams();
+    const {
+        responseLines,
+        isLoading,
+        isError,
+        streamResponse,
+        responseContainerRef
+    } = useStreamingResponse();
+    
+    const [buttonDisabled, setButtonDisabled] = useState(false);
+    const [showResponse, setShowResponse] = useState(false);
+    const [cancelText, setCancelText] = useState('Cancel');
 
-	useEffect(() => {
-		const searchParams = new URLSearchParams(window.location.search);
-		const project = searchParams.get('proj') || '';
-		const actionType = searchParams.get('action') || '';
+    const handleActionClick = () => {
+        // Show response container
+        setShowResponse(true);
+        
+        // Start streaming the response
+        streamResponse(agreeLink);
+        
+        // Disable the button
+        setButtonDisabled(true);
+        
+        // Change Cancel to Back to Dashboard
+        setCancelText('Back to Dashboard');
+    };
 
-		if (project && actionType) {
-			setData((data) => { return { ...data, project, actionType, agreeLink: `/${actionType === 'delete' ? 'doDelete' : 'doRestart'}?domain=${encodeURIComponent(window.location.hostname)}&proj=${encodeURIComponent(project)}` }; });
-		}
-	}, []);
-
-	return (
-		<section className={styles.wrapper}>
-			<h2 className={styles.warnMsg}>Are you sure you want to <span className={styles.redText}>{data.actionType}</span> "{data.project}"?</h2>
-			<div>
-				<a className={styles.warnButton} href="/">Cancel</a>
-				<a className={styles.warnButton+' '+styles.warnRed} href={data.agreeLink}>{capitalizeFirstLetter(data.actionType)}</a>
-			</div>
-		</section>
-	);
+    return (
+        <section className={styles.wrapper}>
+            <h2 className={styles.warnMsg}>Are you sure you want to <span className={styles.redText}>{actionType}</span> "{project}"?</h2>
+            <div className={styles.buttonContainer}>
+                <a href="/" className={styles.buttonLink}>
+                    <button type="button" className={styles.warnButton}>{cancelText}</button>
+                </a>
+                <button 
+                    className={`${styles.warnButton} ${styles.warnRed}`} 
+                    onClick={handleActionClick}
+                    disabled={buttonDisabled}
+                >
+                    {capitalizeFirstLetter(actionType)}
+                </button>
+            </div>
+            {showResponse && (
+                <div className={styles.iframeContainer} ref={responseContainerRef}>
+                    <div className={styles.responseContent}>
+                        {responseLines.map((line, index) => (
+                            <div key={index} className={styles.responseLine}>
+                                {line}
+                            </div>
+                        ))}
+                        {isLoading && <div className={styles.loadingIndicator}>Loading...</div>}
+                        {isError && <div className={styles.errorMessage}>An error occurred while processing your request.</div>}
+                    </div>
+                </div>
+            )}
+        </section>
+    );
 }
