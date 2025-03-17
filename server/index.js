@@ -178,13 +178,10 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
         deletingState.add(proj);
         let lastKnownStatus = 'running'
         const project = projects.find(el => el.name === proj);
-        if(!project){
-            return res.end()
-        }
         
         lastKnownStatus = project.status
         project.status = 'deleting'
-
+        
         const spw = cp.spawn("beamup-delete-addon", ["--force", proj])
         let success = false;
         const testString = 'Addon removal process completed successfully';
@@ -201,8 +198,8 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
         })
         let err = ''
         spw.stdout.on('data', send)
-        spw.stderr.on('data', send)
         spw.stderr.on('data', (data)=>{
+            send(data);
             err += data.toString();
         })
 
