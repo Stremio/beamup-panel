@@ -81,7 +81,6 @@ sudo vim /etc/systemd/system/beamup-panel.service
 ```sh
 sudo systemctl daemon-reload
 sudo systemctl enable beamup-panel.service
-sudo systemctl start beamup-panel.service
 ```
 
 ## 6. Configure Sudo Permissions for `dokku`
