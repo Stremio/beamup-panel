@@ -2,29 +2,52 @@
 
 .wrapper {
 	text-align: center;
+    
+    .buttonContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+    }
+    
+    .buttonLink {
+        text-decoration: none;
+        margin: 0 10px;
+        
+        &:hover {
+            text-decoration: none;
+        }
+    }
+    
     .warnButton {
-    	display: inline-block;
-    	text-decoration: none;
         padding: 0.45rem;
         font-size: var(--font-size-normal);
         font-weight: var(--font-weight-semi-mid);
         text-align: center;
         cursor: pointer;
-
         background: #313339;
         border: 2px solid #313339;
         border-radius: 1.3rem;
         color: white;
         opacity: 0.6;
-        min-width: 90px;
-        margin: 0 10px;
-        margin-top: 20px;
+        min-width: 120px;
         
         &:hover {
             color: black;
             background: transparent;
             border: 2px solid black;
             opacity: 0.5;
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+            &:hover {
+                color: white;
+                background: #313339;
+                border: 2px solid #313339;
+                opacity: 0.4;
+            }
         }
     }
 
@@ -34,6 +57,14 @@
             border: 2px solid #FF0000;
             opacity: 1 !important;
         }
+
+        &:disabled {
+            &:hover {
+                color: white;
+                background: #313339;
+                border: 2px solid #313339;
+            }
+        }
     }
 
     .redText {
@@ -42,5 +73,47 @@
 
     .warnMsg {
     	font-size: 18px;
+    }
+
+    .iframeContainer {
+        margin: 20px auto;
+        width: 90%;
+        max-width: 800px;
+        border: 1px solid #444;
+        border-radius: 6px;
+        background: #1e1e1e;
+        padding: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        height: 300px;
+        overflow: auto;
+        text-align: left;
+    }
+
+    .responseContent {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #ddd;
+    }
+
+    .responseLine {
+        margin: 0;
+        padding: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .loadingIndicator {
+        color: #888;
+        margin-top: 8px;
+        font-style: italic;
+    }
+    
+    .errorMessage {
+        color: #ff6b6b;
+        margin-top: 10px;
+        padding: 8px;
+        border-left: 3px solid #ff6b6b;
+        background-color: rgba(255, 107, 107, 0.1);
     }
 }

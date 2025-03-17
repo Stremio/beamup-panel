@@ -177,58 +177,43 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
     if (userHasProject(login, proj)) {
         deletingState.add(proj);
         let lastKnownStatus = 'running'
-        projects.find(el => {
-            if (el.name === proj) {
-                lastKnownStatus = el.status
-                el.status = 'deleting'
-                return true
+        const project = projects.find(el => el.name === proj);
+        
+        lastKnownStatus = project.status
+        project.status = 'deleting'
+        
+        const spw = cp.spawn("beamup-delete-addon", ["--force", proj])
+        let success = false;
+        const testString = 'Addon removal process completed successfully';
+        const send = (data) => {
+            if(data.toString().includes(testString)){
+                success = true;
             }
-            return false
-        });
+          res.write(data.toString())
+        }
 
-        cp.exec(
-            `/usr/local/bin/beamup-delete-addon --force "${proj}"`,
-            (err, stdout, stderr) => {
-                if (err) {
-                    console.log(`addon remove err: ${err} ${err.message} ${err.toString()}`);
-                    deletingState.remove(proj)
-                    projects.find(el => {
-                        if (el.name === proj) {
-                            el.status = lastKnownStatus
-                            return true
-                        }
-                        return false
-                    });
-                    res.status(500).json({ errMessage: (err || {}).message || 'Unknown addon remove error' })
-                    return;
-                }
+        res.set({
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Transfer-Encoding': 'chunked'
+        })
+        let err = ''
+        spw.stdout.on('data', send)
+        spw.stderr.on('data', (data)=>{
+            send(data);
+            err += data.toString();
+        })
 
-                if (stderr) {
-                    console.log(`addon remove stderr: ${stderr}`);
-                    deletingState.remove(proj)
-                    projects.find(el => {
-                        if (el.name === proj) {
-                            el.status = lastKnownStatus
-                            return true
-                        }
-                        return false
-                    });
-                    res.status(500).json({ errMessage: stderr })
-                    return;
-                }
+        spw.on('close', function (code) {
+            if(success){
+                projects = projects.filter(el => el.name !== proj)
+            }else{
+                console.log(`addon remove err: ${err}`);
+                project.status = lastKnownStatus
 
-                if (stdout) {
-                    console.log(`addon remove stdout: ${stdout}`);
-                }
-
-                res.redirect(`/afterDelete?proj=${encodeURIComponent(proj)}`);
-
-                setTimeout(() => {
-                    deletingState.remove(proj)
-                }, 2 * 60 * 60 * 1000) // consider the project deleted after 2 mins
             }
-        );
-        return;
+            deletingState.remove(proj);
+            res.end()
+        })
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
@@ -238,40 +223,24 @@ app.get('/doRestart', protectedRoute, async (req, res) => {
     const login = res.locals.userData.login;
     const proj = req.query.proj;
     if (userHasProject(login, proj)) {
-        // this command takes long, we won't wait for it to finish
-        function respond(errMessage, redirect) {
-            if (redirectTimeout) {
-                clearTimeout(redirectTimeout);
-                redirectTimeout = false;
-            } else return;
-            if (redirect) res.redirect(redirect);
-            else res.status(500).json({ errMessage });
+
+        const {command, args} = getSSHCommand(config.node_manager, `project-update ${proj}`, false)
+        const spw = cp.spawn(command, args)
+        
+        const send = (data) => {
+          res.write(data.toString() + '\n')
         }
-        let redirectTimeout = setTimeout(() => {
-            respond(null, '/')
-        }, 5000);
-        // ssh stremio-beamup-swarm-0 project-update 1fe84bc728af-rpdb
-        cp.exec(getSSHCommand(config.node_manager, `project-update ${proj}`),
-            (err, stdout, stderr) => {
-                if (err) {
-                    console.log(`err: ${err} ${err.message} ${err.toString()}`);
-                    respond((err || {}).message || 'Unknown error');
-                    return;
-                }
 
-                if (stderr) {
-                    console.log(`stderr: ${stderr}`);
-                    respond(stderr);
-                    return;
-                }
+        res.set({
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Transfer-Encoding': 'chunked'
+        })
 
-                if (stdout) {
-                    console.log(`stdout: ${stdout}`);
-                }
-
-                respond(null, '/');
-            }
-        );
+        spw.stdout.on('data', send)
+        spw.stderr.on('data', send)
+        spw.on('close', function (code) {
+            res.end()
+        })
     } else {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
