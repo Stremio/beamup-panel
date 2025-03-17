@@ -22,9 +22,10 @@ cd beamup-panel
 ```
 
 ### Create the Sessions Directory
-
+```sh
 sudo mkdir -p /opt/beamup-panel/sessions
 sudo chown dokku:dokku /opt/beamup-panel/sessions
+```
 
 If using a different directory, update the env in the systemd service file accordingly.
 
