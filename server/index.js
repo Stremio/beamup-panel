@@ -211,6 +211,7 @@ app.get('/doDelete', protectedRoute, async (req, res) => {
                 project.status = lastKnownStatus
 
             }
+            deletingState.remove(proj);
             res.end()
         })
     } else {
