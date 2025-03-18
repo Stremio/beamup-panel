@@ -69,11 +69,11 @@ const getServerUsage = (nodeHost) => {
 					if (['cpu', 'mem'].includes(issueWith) && Array.isArray(serverUsage.containers) && serverUsage.containers.length) {
 						const containersUsage = serverUsage.containers.map(el => {
 							const val = el[issueWith === 'cpu' ? 'CPUPerc' : 'MemPerc']
-							return val ? parseFloat(el)/100 : 0
+							return val ? parseFloat(val)/100 : 0
 						})
 						const largest3idx = get3largestIdx(containersUsage)
 						largest3idx.forEach(containerIdx => {
-							msg += `${serverUsage.containers[containerIdx].name} project using CPU: ${serverUsage.containers[containerIdx]['CPUPerc']}, MEM: ${serverUsage.containers[containerIdx]['MemPerc']}\n`
+							msg += `${serverUsage.containers[containerIdx].Name} project using CPU: ${serverUsage.containers[containerIdx]['CPUPerc']}, MEM: ${serverUsage.containers[containerIdx]['MemPerc']}\n`
 						})
 					}
 					slack.say(msg)
