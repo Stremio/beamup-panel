@@ -21,7 +21,9 @@ const config = {
   node_prefix: process.env.NODE_PREFIX || 'stremio-beamup-swarm-',
   node_ssh_user: process.env.NODE_USER || 'beamup',
   node_ssh_key: process.env.NODE_SSH_KEY || '/home/dokku/.ssh/id_ed25519_sync',
-  node_ssh_port: process.env.NODE_SSH_PORT
+  node_ssh_port: process.env.NODE_SSH_PORT,
+  slack_warnings_cooldown: 15 * 60 * 1000, // 15m
+  slack_warnings_minimum: 3 // 3 consicultive warnings to trigger the message
 };
 
 const envVarsSchema = Joi.object({
@@ -41,6 +43,8 @@ const envVarsSchema = Joi.object({
   node_ssh_user: Joi.string().required(),
   node_ssh_key: Joi.string(),
   node_ssh_port: Joi.string(),
+  slack_warnings_cooldown: Joi.number().required(),
+  slack_warnings_minimum: Joi.number().required(),
 });
 
 const { error } = envVarsSchema.validate(config);

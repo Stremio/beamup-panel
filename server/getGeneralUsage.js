@@ -38,6 +38,49 @@ function get3largestIdx(arr) {
     return res
 }
 
+let warningsHistory = {};
+let lastMsgTime = null;
+
+const checkWarnings = (nodeHost, serverUsage) => {
+    if (serverUsage) {
+        if (!warningsHistory[nodeHost])
+            warningsHistory[nodeHost] = [];
+
+        let nodeWarnings = warningsHistory[nodeHost];
+        nodeWarnings.unshift(serverUsage);
+
+        const isDanger = serverUsage?.cpu > 0.93 || serverUsage?.mem > 0.9 || serverUsage?.hdd > 0.93;
+        const isWarning = serverUsage?.cpu > 0.84 || serverUsage?.mem > 0.8 || serverUsage?.hdd > 0.84;
+        const issueType = isDanger ? 'Danger' : isWarning ? 'Warning' : false;
+        if (issueType) {
+            const types = ['cpu', 'mem', 'hdd'];
+            const vals = [serverUsage?.cpu, serverUsage?.mem, serverUsage?.hdd];
+            const maxNum = Math.max.apply(null, vals);
+            const idx = vals.indexOf(maxNum);
+            const issueWith = types[idx];
+            let msg = `${issueType} on server ${nodeHost}, CPU: ${serverUsage?.cpu}, MEM: ${serverUsage?.mem}, HDD: ${serverUsage?.hdd}\n`;
+            if (['cpu', 'mem'].includes(issueWith) && Array.isArray(serverUsage.containers) && serverUsage.containers.length) {
+                const containersUsage = serverUsage.containers.map(el => {
+                    const val = el[issueWith === 'cpu' ? 'CPUPerc' : 'MemPerc'];
+                    return val ? parseFloat(val) / 100 : 0;
+                });
+                const largest3idx = get3largestIdx(containersUsage);
+                largest3idx.forEach(containerIdx => {
+                    msg += `${serverUsage.containers[containerIdx].Name} project using CPU: ${serverUsage.containers[containerIdx]['CPUPerc']}, MEM: ${serverUsage.containers[containerIdx]['MemPerc']}\n`;
+                });
+            }
+            if (nodeWarnings.length > config.slack_warnings_minimum) {
+                if (Date.now() - lastMsgTime > config.slack_warnings_cooldown) {
+                    lastMsgTime = Date.now();
+                    nodeWarnings.length = 0; // Clear the array
+                    slack.say(msg);
+                }
+                warningsHistory[nodeHost] = nodeWarnings.slice(0, config.slack_warnings_minimum);
+            }
+        }
+    }
+}
+
 const getServerUsage = (nodeHost) => {
 	return new Promise(async (resolve) => {
 		exec(getSSHCommand(nodeHost, 'server-stats'), (error, stdout, stderr) => {
@@ -55,30 +98,7 @@ const getServerUsage = (nodeHost) => {
                 return
             }
             // check server usage and projects usage
-            if (serverUsage) {
-				const isDanger = serverUsage?.cpu > 0.93 || serverUsage?.mem > 0.9 || serverUsage?.hdd > 0.93
-				const isWarning = serverUsage?.cpu > 0.84 || serverUsage?.mem > 0.8 || serverUsage?.hdd > 0.84
-				const issueType = isDanger ? 'Danger' : isWarning ? 'Warning' : false
-				if (issueType) {
-					const types = ['cpu', 'mem', 'hdd']
-					const vals = [serverUsage?.cpu, serverUsage?.mem, serverUsage?.hdd]
-					const maxNum = Math.max.apply(null, vals)
-					const idx = vals.indexOf(maxNum)
-					const issueWith = types[idx]
-					let msg = `${issueType} on server ${nodeHost}, CPU: ${serverUsage?.cpu}, MEM: ${serverUsage?.mem}, HDD: ${serverUsage?.hdd}\n`
-					if (['cpu', 'mem'].includes(issueWith) && Array.isArray(serverUsage.containers) && serverUsage.containers.length) {
-						const containersUsage = serverUsage.containers.map(el => {
-							const val = el[issueWith === 'cpu' ? 'CPUPerc' : 'MemPerc']
-							return val ? parseFloat(val)/100 : 0
-						})
-						const largest3idx = get3largestIdx(containersUsage)
-						largest3idx.forEach(containerIdx => {
-							msg += `${serverUsage.containers[containerIdx].Name} project using CPU: ${serverUsage.containers[containerIdx]['CPUPerc']}, MEM: ${serverUsage.containers[containerIdx]['MemPerc']}\n`
-						})
-					}
-					slack.say(msg)
-				}
-			}
+            checkWarnings(nodeHost, serverUsage);
             resolve(serverUsage)
 		})
 	})	
