@@ -343,7 +343,7 @@ const logUsage = () => {
             }
         }
         lastServerUsage = serversUsage
-        fs.writeFileSync(PATH.join(sessionsFolder, 'servers_usage_history.json'), JSON.stringify(serverUsageHistory))
+        fs.writeFileSync(PATH.join(sessionsFolder, 'servers_usage_history.json'), JSON.stringify(serverUsageHistory, null, 2))
         if (Array.isArray(projects) && projects.length) {
             projects = generalUsage.projects
             let projectUsageHistory = []
@@ -358,7 +358,7 @@ const logUsage = () => {
             if (projectUsageHistory.length > maxEntries) {
                 projectUsageHistory = projectUsageHistory.slice(0, maxEntries)
             }
-            fs.writeFileSync(PATH.join(sessionsFolder, 'project_usage_history.json'), JSON.stringify(projectUsageHistory))
+            fs.writeFileSync(PATH.join(sessionsFolder, 'project_usage_history.json'), JSON.stringify(projectUsageHistory, null, 2))
         }
     }
     updateServerUsage()
