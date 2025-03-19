@@ -72,9 +72,10 @@ const checkWarnings = (nodeHost, serverUsage) => {
             if (nodeWarnings.length > config.slack_warnings_minimum) {
                 if (Date.now() - lastMsgTime > config.slack_warnings_cooldown) {
                     lastMsgTime = Date.now();
-                    nodeWarnings.length = 0; // Clear the array
                     slack.say(msg);
+                    warningsHistory[nodeHost] = [];
                 }
+            } else {
                 warningsHistory[nodeHost] = nodeWarnings.slice(0, config.slack_warnings_minimum);
             }
         }
