@@ -100,10 +100,18 @@ CLIENT_ID=your_github_client_id
 CLIENT_SECRET=your_github_client_secret
 SLACK_WEBHOOK=https://hooks.slack.com/services/...
 SLACK_CHANNEL=your_slack_channel_id
+SLACK_SIGNING_SECRET=your_slack_app_signing_secret
+SLACK_DAILY_REPORT_TIME=21:00
 SERVER_PORT=4000
 ```
 > **Note:** You must create a **GitHub OAuth app** to obtain the `CLIENT_ID` and `CLIENT_SECRET`.
 > Refer to the **README** for instructions on setting up the OAuth app and configuring its **Homepage URL** and **Authorization Callback URL**.
+
+Slack command URLs:
+- Slash command request URL: `https://your-domain/slack/command`
+- Events API request URL: `https://your-domain/slack/events`
+
+Supported commands: `mute 30m`, `mute 2h`, `mute until 18:00`, `unmute`, `status`, `report`, `report yesterday`, `report last 6h`.
 
 ## 8. Deploy BeamUp Panel
 Switch to the `dokku` user and execute the deployment script:
