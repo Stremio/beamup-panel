@@ -22,7 +22,7 @@ const config = {
   node_ssh_user: process.env.NODE_USER || 'beamup',
   node_ssh_key: process.env.NODE_SSH_KEY || '/home/dokku/.ssh/id_ed25519_sync',
   node_ssh_port: process.env.NODE_SSH_PORT,
-  slack_warnings_cooldown: 15 * 60 * 1000, // 15m
+  slack_warnings_cooldown: 720 * 60 * 1000, // 12h
   slack_warnings_minimum: 3 // 3 consicultive warnings to trigger the message
 };
 

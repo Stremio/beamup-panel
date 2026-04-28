@@ -46,8 +46,8 @@ const checkWarnings = (nodeHost, serverUsage) => {
     if (!warningsHistory[nodeHost])
         warningsHistory[nodeHost] = [];
 
-    const isDanger = serverUsage?.cpu > 0.93 || serverUsage?.mem > 0.9 || serverUsage?.hdd > 0.93;
-    const isWarning = serverUsage?.cpu > 0.84 || serverUsage?.mem > 0.8 || serverUsage?.hdd > 0.84;
+    const isDanger = serverUsage?.cpu > 0.93 || serverUsage?.mem > 0.9 || serverUsage?.hdd > 0.94;
+    const isWarning = serverUsage?.cpu > 0.84 || serverUsage?.mem > 0.8 || serverUsage?.hdd > 0.89;
     const issueType = isDanger ? 'Danger' : isWarning ? 'Warning' : false;
     if(!issueType){
         warningsHistory[nodeHost].pop();
