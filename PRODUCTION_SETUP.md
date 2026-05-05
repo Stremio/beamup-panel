@@ -111,7 +111,7 @@ SERVER_PORT=4000
 At https://api.slack.com/apps create an app **From scratch**, then:
 
 1. **Basic Information** → copy **Signing Secret** → `SLACK_SIGNING_SECRET`.
-2. **OAuth & Permissions** → add bot scopes `app_mentions:read` and `chat:write` → **Install to Workspace** → copy **Bot User OAuth Token** (starts with `xoxb-`) → `SLACK_BOT_TOKEN`.
+2. **OAuth & Permissions** → add bot scopes `app_mentions:read`, `chat:write`, `files:write` → **Install to Workspace** → copy **Bot User OAuth Token** (starts with `xoxb-`) → `SLACK_BOT_TOKEN`.
 3. Set `SLACK_CHANNEL` to the alert channel's ID (right-click channel → View channel details → bottom of panel).
 4. **Event Subscriptions** → On → Request URL `https://your-domain/slack/events` (panel must be deployed) → subscribe to bot event `app_mention` → Save.
 5. In Slack: `/invite @<bot>` in the alert channel, then test with `@<bot> help`.

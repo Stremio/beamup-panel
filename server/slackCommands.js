@@ -84,7 +84,8 @@ async function handleCommand(text, userName) {
             if (!range) {
                 return { text: `Could not parse report range.\n${helpText()}`, public: false };
             }
-            return { text: buildReport(range).text, public: true };
+            const r = await buildReport(range);
+            return { text: r.text, files: r.files, public: true };
         }
         case 'help':
         default:
@@ -147,8 +148,8 @@ async function eventsEndpoint(req, res) {
     if (!isAllowedChannel(event.channel)) return;
 
     try {
-        const { text } = await handleCommand(event.text, event.user);
-        slack.say(text);
+        const { text, files } = await handleCommand(event.text, event.user);
+        slack.say(text, files);
     } catch (e) {
         console.error('Slack event handling error:', e);
     }

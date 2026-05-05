@@ -2,9 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./config');
 const alertState = require('./alertState');
+const { renderMetricChart } = require('./slackChart');
 
 const sessionsFolder = config.sessions_folder || '../';
-const SPARKLINE_BUCKETS = 40;
 
 function startOfLocalDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
@@ -22,32 +22,6 @@ function avg(values) {
 function max(values) {
     if (!values.length) return 0;
     return Math.max.apply(null, values.map(value => Number(value || 0)));
-}
-
-function sparkline(values) {
-    const bars = '▁▂▃▄▅▆▇█';
-    if (!values.length) return '';
-    const nums = values.map(value => Number(value || 0));
-    const lo = Math.min.apply(null, nums);
-    const range = Math.max.apply(null, nums) - lo || 1;
-    return nums.map(value => {
-        const idx = Math.round(((value - lo) / range) * (bars.length - 1));
-        return bars[idx];
-    }).join('');
-}
-
-function bucketize(values, bucketCount) {
-    if (values.length <= bucketCount) return values.slice();
-    const buckets = [];
-    for (let i = 0; i < bucketCount; i++) {
-        const start = Math.floor((i * values.length) / bucketCount);
-        const end = Math.floor(((i + 1) * values.length) / bucketCount);
-        const slice = values.slice(start, end);
-        if (slice.length) {
-            buckets.push(slice.reduce((sum, v) => sum + Number(v || 0), 0) / slice.length);
-        }
-    }
-    return buckets;
 }
 
 function rangeForPreset(preset) {
@@ -101,14 +75,26 @@ function readServerStats(start, end) {
         return {
             host: config.node_prefix + idx,
             count: filtered.length,
-            cpu: { avg: avg(cpuValues), max: max(cpuValues), spark: sparkline(bucketize(cpuValues, SPARKLINE_BUCKETS)) },
-            mem: { avg: avg(memValues), max: max(memValues), spark: sparkline(bucketize(memValues, SPARKLINE_BUCKETS)) },
-            hdd: { avg: avg(hddValues), max: max(hddValues), spark: sparkline(bucketize(hddValues, SPARKLINE_BUCKETS)) },
+            samples: filtered,
+            cpu: { avg: avg(cpuValues), max: max(cpuValues) },
+            mem: { avg: avg(memValues), max: max(memValues) },
+            hdd: { avg: avg(hddValues), max: max(hddValues) },
         };
     }).filter(Boolean);
 }
 
-function buildReport(range) {
+async function buildCharts(serverStats, range) {
+    if (!serverStats.length) return [];
+    const metrics = ['cpu', 'mem', 'hdd'];
+    const buffers = await Promise.all(metrics.map(m => renderMetricChart(m, serverStats, range)));
+    return metrics.map((m, i) => ({
+        buffer: buffers[i],
+        filename: `${m}-${range.label.replace(/\s+/g, '_')}.png`,
+        title: `${m.toUpperCase()} usage — ${range.label}`,
+    }));
+}
+
+async function buildReport(range) {
     const issues = alertState.getIssues(range.start, range.end);
     const serverStats = readServerStats(range.start, range.end);
     const dangerCount = issues.filter(i => i.issueType === 'Danger').length;
@@ -119,12 +105,10 @@ function buildReport(range) {
     if (serverStats.length) {
         text += '\n*System usage*';
         serverStats.forEach(s => {
-            text += `\n${s.host} (${s.count} samples)`;
-            text += '\n```\n';
-            text += `CPU avg ${formatPercent(s.cpu.avg)} / max ${formatPercent(s.cpu.max)}  ${s.cpu.spark}\n`;
-            text += `MEM avg ${formatPercent(s.mem.avg)} / max ${formatPercent(s.mem.max)}  ${s.mem.spark}\n`;
-            text += `HDD avg ${formatPercent(s.hdd.avg)} / max ${formatPercent(s.hdd.max)}  ${s.hdd.spark}`;
-            text += '\n```';
+            text += `\n${s.host} (${s.count} samples): `;
+            text += `CPU avg ${formatPercent(s.cpu.avg)} / max ${formatPercent(s.cpu.max)}, `;
+            text += `MEM avg ${formatPercent(s.mem.avg)} / max ${formatPercent(s.mem.max)}, `;
+            text += `HDD avg ${formatPercent(s.hdd.avg)} / max ${formatPercent(s.hdd.max)}`;
         });
     } else {
         text += '\nNo server samples recorded for this range.';
@@ -148,9 +132,17 @@ function buildReport(range) {
         text += '\n\nNo issues recorded for this range.';
     }
 
+    let files = [];
+    try {
+        files = await buildCharts(serverStats, range);
+    } catch (e) {
+        console.error('buildReport: chart rendering failed:', e.message);
+    }
+
     return {
         hasIssues: issues.length > 0,
         text,
+        files,
     };
 }
 

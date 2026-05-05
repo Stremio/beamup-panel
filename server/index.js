@@ -340,7 +340,7 @@ function dailyReportTimeReached(now) {
     return now.getHours() > hour || (now.getHours() === hour && now.getMinutes() >= minute);
 }
 
-function checkDailySlackReport() {
+async function checkDailySlackReport() {
     const now = new Date();
     const key = reportDateKey(now);
     if (!dailyReportTimeReached(now) || alertState.getLastDailyReportKey() === key) {
@@ -348,9 +348,9 @@ function checkDailySlackReport() {
     }
 
     const range = rangeForPreset('today');
-    const report = buildReport(range);
+    const report = await buildReport(range);
     if (report.hasIssues) {
-        slack.say(report.text);
+        slack.say(report.text, report.files);
     }
     alertState.setLastDailyReportKey(key);
 }

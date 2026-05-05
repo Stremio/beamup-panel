@@ -1,30 +1,41 @@
-const fetch = require("node-fetch");
+const { WebClient } = require('@slack/web-api');
 const config = require('./config');
 
-// we use the legacy slack webhooks to send messages to slack channels
-// because the new app webhooks seem to always send to #general and
-// do not support changing avatar image and bot name per each req
+const client = config.slack_bot_token ? new WebClient(config.slack_bot_token) : null;
 
 function fixResponse(text) {
-	// remove programming language title after ```, slack does not support it
 	text = text.replace(/```[^]*?\n/g, '```\n')
-	// gpt-4 adds quotes around responses when responding with alternative mindset
 	if (text.startsWith('"') && text.endsWith('"'))
-		text = text.substr(1, text.length -2)
+		text = text.substr(1, text.length - 2)
 	return text
 }
 
-function say(text) {
-	fetch(config.slack_webhook, {
-		method: 'POST',
-		headers: { 'Content-type': 'application/json' },
-		body: JSON.stringify({
-			channel: config.slack_channel,
-			text: fixResponse(text),
-		}),
-	})
-	.then(d => {})
-	.catch(e => { console.error(e) })
+function say(text, files) {
+	if (!client) {
+		console.error('slack.say: SLACK_BOT_TOKEN not configured');
+		return;
+	}
+	const cleanText = fixResponse(text);
+	if (Array.isArray(files) && files.length) {
+		client.files.uploadV2({
+			channel_id: config.slack_channel,
+			initial_comment: cleanText,
+			file_uploads: files.map(f => ({
+				file: f.buffer,
+				filename: f.filename,
+				title: f.title || f.filename,
+			})),
+		}).catch(e => {
+			console.error('slack.say (uploadV2) failed:', e.data || e.message || e);
+		});
+		return;
+	}
+	client.chat.postMessage({
+		channel: config.slack_channel,
+		text: cleanText,
+	}).catch(e => {
+		console.error('slack.say (postMessage) failed:', e.data || e.message || e);
+	});
 }
 
 module.exports = {
