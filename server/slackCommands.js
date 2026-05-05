@@ -4,11 +4,15 @@ const alertState = require('./alertState');
 const slack = require('./slack');
 const { buildReport, rangeForPreset } = require('./slackReport');
 
+const MAX_MUTE_MS = 7 * 24 * 60 * 60 * 1000;
+const RECENT_EVENT_LIMIT = 1000;
+const recentEventIds = new Map();
+
 function parseDuration(text) {
     const match = text.match(/^(\d+)\s*([mhd])$/i);
     if (!match) return false;
 
-    const amount = parseInt(match[1]);
+    const amount = parseInt(match[1], 10);
     const unit = match[2].toLowerCase();
     const unitMs = unit === 'd' ? 24 * 60 * 60 * 1000 : unit === 'h' ? 60 * 60 * 1000 : 60 * 1000;
     return amount * unitMs;
@@ -23,7 +27,7 @@ function parseMuteUntil(text) {
     if (!untilMatch) return false;
 
     const now = new Date();
-    const until = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(untilMatch[1]), parseInt(untilMatch[2]), 0, 0);
+    const until = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(untilMatch[1], 10), parseInt(untilMatch[2], 10), 0, 0);
     if (until.getTime() <= Date.now()) {
         until.setDate(until.getDate() + 1);
     }
@@ -37,21 +41,13 @@ function formatMute(mute) {
 }
 
 function cleanCommandText(text) {
-    return (text || '')
-        .replace(/^<@[A-Z0-9]+>\s*/i, '')
-        .replace(/^(stremur|beamup|bot)[:,]?\s+/i, '')
-        .trim();
-}
-
-function isCommandMessage(text) {
-    const cleaned = cleanCommandText(text).toLowerCase();
-    return /^(mute|unmute|status|report|help)(\s|$)/.test(cleaned);
+    return (text || '').replace(/^<@[A-Z0-9]+>\s*/i, '').trim();
 }
 
 function helpText() {
     return [
         'Commands:',
-        '`mute 30m`, `mute 2h`, `mute 1d`, `mute until 18:00`',
+        '`mute 30m`, `mute 2h`, `mute 1d`, `mute until 18:00` (max 7d)',
         '`unmute`',
         '`status`',
         '`report`, `report today`, `report yesterday`, `report 2026-04-26`, `report last 6h`',
@@ -67,27 +63,32 @@ async function handleCommand(text, userName) {
         case 'mute': {
             const mutedUntil = parseMuteUntil(rest);
             if (!mutedUntil) {
-                return `Could not parse mute duration.\n${helpText()}`;
+                return { text: `Could not parse mute duration.\n${helpText()}`, public: false };
+            }
+            if (mutedUntil - Date.now() > MAX_MUTE_MS) {
+                return { text: 'Maximum mute duration is 7 days.', public: false };
             }
             const mute = alertState.setMute(mutedUntil, userName || '', '');
-            return `Muted alerts until ${new Date(mute.mutedUntil).toLocaleString()}. Daily and on-demand reports will still send.`;
+            return {
+                text: `Muted alerts until ${new Date(mute.mutedUntil).toLocaleString()}. Daily and on-demand reports will still send.`,
+                public: true,
+            };
         }
         case 'unmute':
             alertState.clearMute();
-            return 'Alerts are unmuted.';
+            return { text: 'Alerts are unmuted.', public: true };
         case 'status':
-            return formatMute(alertState.getMute());
+            return { text: formatMute(alertState.getMute()), public: false };
         case 'report': {
             const range = rangeForPreset(rest || 'today');
             if (!range) {
-                return `Could not parse report range.\n${helpText()}`;
+                return { text: `Could not parse report range.\n${helpText()}`, public: false };
             }
-            return buildReport(range).text;
+            return { text: buildReport(range).text, public: true };
         }
         case 'help':
-            return helpText();
         default:
-            return helpText();
+            return { text: helpText(), public: false };
     }
 }
 
@@ -98,46 +99,31 @@ function timingSafeEqual(a, b) {
 }
 
 function verifySlackRequest(req) {
-    if (config.slack_signing_secret) {
-        const timestamp = req.get('x-slack-request-timestamp');
-        const signature = req.get('x-slack-signature');
-        if (!timestamp || !signature) return false;
-        if (Math.abs(Math.floor(Date.now() / 1000) - parseInt(timestamp)) > 60 * 5) return false;
+    if (!config.slack_signing_secret) return false;
 
-        const sigBase = `v0:${timestamp}:${req.rawBody ? req.rawBody.toString() : ''}`;
-        const digest = `v0=${crypto.createHmac('sha256', config.slack_signing_secret).update(sigBase).digest('hex')}`;
-        return timingSafeEqual(digest, signature);
-    }
+    const timestamp = req.get('x-slack-request-timestamp');
+    const signature = req.get('x-slack-signature');
+    if (!timestamp || !signature) return false;
+    if (Math.abs(Math.floor(Date.now() / 1000) - parseInt(timestamp, 10)) > 60 * 5) return false;
 
-    if (config.slack_command_token) {
-        return req.body && req.body.token === config.slack_command_token;
-    }
-
-    return true;
+    const sigBase = `v0:${timestamp}:${req.rawBody ? req.rawBody.toString() : ''}`;
+    const digest = `v0=${crypto.createHmac('sha256', config.slack_signing_secret).update(sigBase).digest('hex')}`;
+    return timingSafeEqual(digest, signature);
 }
 
 function isAllowedChannel(channel) {
-    return !config.slack_channel || config.slack_channel === '1' || channel === config.slack_channel;
+    return !!config.slack_channel && channel === config.slack_channel;
 }
 
-async function commandEndpoint(req, res) {
-    if (!verifySlackRequest(req)) {
-        return res.status(401).json({ error: 'Invalid Slack signature' });
+function isDuplicateEvent(eventId) {
+    if (!eventId) return false;
+    if (recentEventIds.has(eventId)) return true;
+    recentEventIds.set(eventId, Date.now());
+    while (recentEventIds.size > RECENT_EVENT_LIMIT) {
+        const oldest = recentEventIds.keys().next().value;
+        recentEventIds.delete(oldest);
     }
-
-    if (!isAllowedChannel(req.body.channel_id)) {
-        return res.status(200).json({
-            response_type: 'ephemeral',
-            text: 'BeamUp alert commands are not enabled in this channel.',
-        });
-    }
-
-    const text = req.body.text || '';
-    const response = await handleCommand(text, req.body.user_name || req.body.user_id);
-    return res.status(200).json({
-        response_type: 'in_channel',
-        text: response,
-    });
+    return false;
 }
 
 async function eventsEndpoint(req, res) {
@@ -149,26 +135,26 @@ async function eventsEndpoint(req, res) {
         return res.status(200).json({ challenge: req.body.challenge });
     }
 
+    if (isDuplicateEvent(req.body.event_id)) {
+        return res.status(200).json({ ok: true });
+    }
+
+    res.status(200).json({ ok: true });
+
     const event = req.body.event || {};
-    if (event.bot_id || !event.text) {
-        return res.status(200).json({ ok: true });
-    }
+    if (event.type !== 'app_mention') return;
+    if (event.bot_id || event.subtype === 'bot_message' || !event.text) return;
+    if (!isAllowedChannel(event.channel)) return;
 
-    if (!isAllowedChannel(event.channel)) {
-        return res.status(200).json({ ok: true });
+    try {
+        const { text } = await handleCommand(event.text, event.user);
+        slack.say(text);
+    } catch (e) {
+        console.error('Slack event handling error:', e);
     }
-
-    if (!['app_mention', 'message'].includes(event.type) || !isCommandMessage(event.text)) {
-        return res.status(200).json({ ok: true });
-    }
-
-    const response = await handleCommand(event.text, event.user);
-    slack.say(response);
-    return res.status(200).json({ ok: true });
 }
 
 module.exports = {
-    commandEndpoint,
     eventsEndpoint,
     handleCommand,
 };

@@ -11,7 +11,6 @@ const config = {
   slack_webhook: process.env.SLACK_WEBHOOK || '1',
   slack_channel: process.env.SLACK_CHANNEL || '1',
   slack_signing_secret: process.env.SLACK_SIGNING_SECRET || '',
-  slack_command_token: process.env.SLACK_COMMAND_TOKEN || '',
   slack_daily_report_time: process.env.SLACK_DAILY_REPORT_TIME || '21:00',
   projects_cache_time: 30 * 1000, // 30s
   session_expire: parseInt(process.env.SESSION_EXPIRE || 30 * 24 * 60 * 60 * 1000),
@@ -36,7 +35,6 @@ const envVarsSchema = Joi.object({
   slack_webhook: Joi.string().required(),
   slack_channel: Joi.string().required(),
   slack_signing_secret: Joi.string().allow('').required(),
-  slack_command_token: Joi.string().allow('').required(),
   slack_daily_report_time: Joi.string().required(),
   projects_cache_time: Joi.number().required(),
   session_expire: Joi.number().required(),

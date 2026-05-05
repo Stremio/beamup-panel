@@ -30,7 +30,6 @@ app.use(
         verify: captureRawBody,
     }),
 );
-app.use(bodyParser.json({ type: 'text/*', verify: captureRawBody }));
 app.use(bodyParser.urlencoded({ extended: false, verify: captureRawBody }));
 
 app.use(
@@ -143,7 +142,6 @@ app.get('/getProjectUsage', protectedRoute, async (req, res) => {
     }
 })
 
-app.post('/slack/command', slackCommands.commandEndpoint);
 app.post('/slack/events', slackCommands.eventsEndpoint);
 
 function userHasProject(login, proj) {
