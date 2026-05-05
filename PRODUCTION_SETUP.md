@@ -98,7 +98,7 @@ Create an `.env` file inside `/opt/beamup-panel` and add the following:
 NODE_ENV=production
 CLIENT_ID=your_github_client_id
 CLIENT_SECRET=your_github_client_secret
-SLACK_WEBHOOK=https://hooks.slack.com/services/...
+SLACK_BOT_TOKEN=xoxb-your-bot-token
 SLACK_CHANNEL=your_slack_channel_id
 SLACK_SIGNING_SECRET=your_slack_app_signing_secret
 SLACK_DAILY_REPORT_TIME=21:00
@@ -111,8 +111,8 @@ SERVER_PORT=4000
 At https://api.slack.com/apps create an app **From scratch**, then:
 
 1. **Basic Information** → copy **Signing Secret** → `SLACK_SIGNING_SECRET`.
-2. **Incoming Webhooks** → On → **Add New Webhook to Workspace** → pick alert channel → copy URL → `SLACK_WEBHOOK`. Set `SLACK_CHANNEL` to that channel's ID.
-3. **OAuth & Permissions** → add bot scopes `app_mentions:read` and `chat:write` → **Install to Workspace**.
+2. **OAuth & Permissions** → add bot scopes `app_mentions:read` and `chat:write` → **Install to Workspace** → copy **Bot User OAuth Token** (starts with `xoxb-`) → `SLACK_BOT_TOKEN`.
+3. Set `SLACK_CHANNEL` to the alert channel's ID (right-click channel → View channel details → bottom of panel).
 4. **Event Subscriptions** → On → Request URL `https://your-domain/slack/events` (panel must be deployed) → subscribe to bot event `app_mention` → Save.
 5. In Slack: `/invite @<bot>` in the alert channel, then test with `@<bot> help`.
 

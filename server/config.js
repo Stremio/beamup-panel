@@ -8,7 +8,7 @@ require('dotenv-expand').expand(
 const config = {
   client_id: process.env.CLIENT_ID || '1',
   client_secret: process.env.CLIENT_SECRET || '1',
-  slack_webhook: process.env.SLACK_WEBHOOK || '1',
+  slack_bot_token: process.env.SLACK_BOT_TOKEN || '',
   slack_channel: process.env.SLACK_CHANNEL || '1',
   slack_signing_secret: process.env.SLACK_SIGNING_SECRET || '',
   slack_daily_report_time: process.env.SLACK_DAILY_REPORT_TIME || '21:00',
@@ -32,7 +32,7 @@ const config = {
 const envVarsSchema = Joi.object({
   client_id: Joi.string().required(),
   client_secret: Joi.string().required(),
-  slack_webhook: Joi.string().required(),
+  slack_bot_token: Joi.string().allow('').required(),
   slack_channel: Joi.string().required(),
   slack_signing_secret: Joi.string().allow('').required(),
   slack_daily_report_time: Joi.string().required(),
