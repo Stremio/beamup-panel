@@ -1,11 +1,13 @@
+const fs = require('fs');
+const path = require('path');
+const config = require('./config');
 const alertState = require('./alertState');
+
+const sessionsFolder = config.sessions_folder || '../';
+const SPARKLINE_BUCKETS = 40;
 
 function startOfLocalDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-}
-
-function formatDateTime(timestamp) {
-    return new Date(timestamp).toLocaleString();
 }
 
 function formatPercent(value) {
@@ -26,12 +28,26 @@ function sparkline(values) {
     const bars = '▁▂▃▄▅▆▇█';
     if (!values.length) return '';
     const nums = values.map(value => Number(value || 0));
-    const min = Math.min.apply(null, nums);
-    const range = Math.max.apply(null, nums) - min || 1;
+    const lo = Math.min.apply(null, nums);
+    const range = Math.max.apply(null, nums) - lo || 1;
     return nums.map(value => {
-        const idx = Math.round(((value - min) / range) * (bars.length - 1));
+        const idx = Math.round(((value - lo) / range) * (bars.length - 1));
         return bars[idx];
     }).join('');
+}
+
+function bucketize(values, bucketCount) {
+    if (values.length <= bucketCount) return values.slice();
+    const buckets = [];
+    for (let i = 0; i < bucketCount; i++) {
+        const start = Math.floor((i * values.length) / bucketCount);
+        const end = Math.floor(((i + 1) * values.length) / bucketCount);
+        const slice = values.slice(start, end);
+        if (slice.length) {
+            buckets.push(slice.reduce((sum, v) => sum + Number(v || 0), 0) / slice.length);
+        }
+    }
+    return buckets;
 }
 
 function rangeForPreset(preset) {
@@ -50,7 +66,7 @@ function rangeForPreset(preset) {
 
     const lastMatch = cleanPreset.match(/^last\s+(\d+)\s*([mh])$/);
     if (lastMatch) {
-        const amount = parseInt(lastMatch[1]);
+        const amount = parseInt(lastMatch[1], 10);
         const unitMs = lastMatch[2] === 'h' ? 60 * 60 * 1000 : 60 * 1000;
         return { start: Date.now() - (amount * unitMs), end: Date.now(), label: `last ${amount}${lastMatch[2]}` };
     }
@@ -64,48 +80,76 @@ function rangeForPreset(preset) {
     return false;
 }
 
+function readServerStats(start, end) {
+    let history;
+    try {
+        history = JSON.parse(fs.readFileSync(path.join(sessionsFolder, 'servers_usage_history.json')));
+    } catch (e) {
+        return [];
+    }
+    if (!Array.isArray(history)) return [];
+
+    return history.map((entries, idx) => {
+        if (!Array.isArray(entries) || !entries.length) return null;
+        const filtered = entries
+            .filter(e => e && e.timestamp >= start && e.timestamp < end)
+            .sort((a, b) => a.timestamp - b.timestamp);
+        if (!filtered.length) return null;
+        const cpuValues = filtered.map(e => e.cpu);
+        const memValues = filtered.map(e => e.mem);
+        const hddValues = filtered.map(e => e.hdd);
+        return {
+            host: config.node_prefix + idx,
+            count: filtered.length,
+            cpu: { avg: avg(cpuValues), max: max(cpuValues), spark: sparkline(bucketize(cpuValues, SPARKLINE_BUCKETS)) },
+            mem: { avg: avg(memValues), max: max(memValues), spark: sparkline(bucketize(memValues, SPARKLINE_BUCKETS)) },
+            hdd: { avg: avg(hddValues), max: max(hddValues), spark: sparkline(bucketize(hddValues, SPARKLINE_BUCKETS)) },
+        };
+    }).filter(Boolean);
+}
+
 function buildReport(range) {
     const issues = alertState.getIssues(range.start, range.end);
-    if (!issues.length) {
-        return {
-            hasIssues: false,
-            text: `No issues found for ${range.label}.`,
-        };
-    }
-
-    const byServer = issues.reduce((acc, issue) => {
-        acc[issue.nodeHost] = acc[issue.nodeHost] || [];
-        acc[issue.nodeHost].push(issue);
-        return acc;
-    }, {});
-
-    const cpuValues = issues.map(issue => issue.cpu);
-    const memValues = issues.map(issue => issue.mem);
-    const hddValues = issues.map(issue => issue.hdd);
-    const affectedServers = Object.keys(byServer);
-    const dangerCount = issues.filter(issue => issue.issueType === 'Danger').length;
+    const serverStats = readServerStats(range.start, range.end);
+    const dangerCount = issues.filter(i => i.issueType === 'Danger').length;
     const warningCount = issues.length - dangerCount;
 
-    let text = `*BeamUp issue report for ${range.label}*\n`;
-    text += `Issues: ${issues.length} (${dangerCount} danger, ${warningCount} warning)\n`;
-    text += `Servers: ${affectedServers.join(', ')}\n`;
-    text += `Window: ${formatDateTime(issues[0].timestamp)} - ${formatDateTime(issues[issues.length - 1].timestamp)}\n`;
-    text += `Max CPU/MEM/HDD: ${formatPercent(max(cpuValues))} / ${formatPercent(max(memValues))} / ${formatPercent(max(hddValues))}\n`;
-    text += `Avg CPU/MEM/HDD: ${formatPercent(avg(cpuValues))} / ${formatPercent(avg(memValues))} / ${formatPercent(avg(hddValues))}\n`;
-    text += '```\n';
-    text += `CPU ${sparkline(cpuValues)}\n`;
-    text += `MEM ${sparkline(memValues)}\n`;
-    text += `HDD ${sparkline(hddValues)}`;
-    text += '\n```\n';
+    let text = `*BeamUp report for ${range.label}*\n`;
 
-    affectedServers.forEach(server => {
-        const serverIssues = byServer[server];
-        const latest = serverIssues[serverIssues.length - 1];
-        text += `\n${server}: ${serverIssues.length} issues, latest ${latest.issueType} CPU ${formatPercent(latest.cpu)}, MEM ${formatPercent(latest.mem)}, HDD ${formatPercent(latest.hdd)}`;
-    });
+    if (serverStats.length) {
+        text += '\n*System usage*';
+        serverStats.forEach(s => {
+            text += `\n${s.host} (${s.count} samples)`;
+            text += '\n```\n';
+            text += `CPU avg ${formatPercent(s.cpu.avg)} / max ${formatPercent(s.cpu.max)}  ${s.cpu.spark}\n`;
+            text += `MEM avg ${formatPercent(s.mem.avg)} / max ${formatPercent(s.mem.max)}  ${s.mem.spark}\n`;
+            text += `HDD avg ${formatPercent(s.hdd.avg)} / max ${formatPercent(s.hdd.max)}  ${s.hdd.spark}`;
+            text += '\n```';
+        });
+    } else {
+        text += '\nNo server samples recorded for this range.';
+    }
+
+    if (issues.length) {
+        text += `\n\n*Issues*: ${issues.length} (${dangerCount} danger, ${warningCount} warning)`;
+        const byServer = issues.reduce((acc, issue) => {
+            acc[issue.nodeHost] = acc[issue.nodeHost] || [];
+            acc[issue.nodeHost].push(issue);
+            return acc;
+        }, {});
+        Object.keys(byServer).forEach(server => {
+            const list = byServer[server];
+            const d = list.filter(i => i.issueType === 'Danger').length;
+            const w = list.length - d;
+            const latest = list[list.length - 1];
+            text += `\n${server}: ${list.length} (${d}d/${w}w), latest ${latest.issueType} CPU ${formatPercent(latest.cpu)} MEM ${formatPercent(latest.mem)} HDD ${formatPercent(latest.hdd)}`;
+        });
+    } else {
+        text += '\n\nNo issues recorded for this range.';
+    }
 
     return {
-        hasIssues: true,
+        hasIssues: issues.length > 0,
         text,
     };
 }
