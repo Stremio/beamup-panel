@@ -107,18 +107,24 @@ SERVER_PORT=4000
 > **Note:** You must create a **GitHub OAuth app** to obtain the `CLIENT_ID` and `CLIENT_SECRET`.
 > Refer to the **README** for instructions on setting up the OAuth app and configuring its **Homepage URL** and **Authorization Callback URL**.
 
-Slack events URL (subscribe to `app_mention` only):
-- `https://your-domain/slack/events`
+## 8. Set Up the Slack App
+At https://api.slack.com/apps create an app **From scratch**, then:
 
-Supported commands (via @-mention): `mute 30m`, `mute 2h`, `mute until 18:00`, `unmute`, `status`, `report`, `report yesterday`, `report last 6h`.
+1. **Basic Information** → copy **Signing Secret** → `SLACK_SIGNING_SECRET`.
+2. **Incoming Webhooks** → On → **Add New Webhook to Workspace** → pick alert channel → copy URL → `SLACK_WEBHOOK`. Set `SLACK_CHANNEL` to that channel's ID.
+3. **OAuth & Permissions** → add bot scopes `app_mentions:read` and `chat:write` → **Install to Workspace**.
+4. **Event Subscriptions** → On → Request URL `https://your-domain/slack/events` (panel must be deployed) → subscribe to bot event `app_mention` → Save.
+5. In Slack: `/invite @<bot>` in the alert channel, then test with `@<bot> help`.
 
-## 8. Deploy BeamUp Panel
+Commands: `mute 30m|2h|until 18:00`, `unmute`, `status`, `report [today|yesterday|YYYY-MM-DD|last 6h]`.
+
+## 9. Deploy BeamUp Panel
 Switch to the `dokku` user and execute the deployment script:
 ```sh
 sudo -u dokku /opt/beamup-panel/scripts/production-deploy.sh
 ```
 
-## 9. Retrieving Logs
+## 10. Retrieving Logs
 To check logs for the BeamUp Panel service, use:
 ```sh
 journalctl -u beamup-panel.service --no-pager --lines=100
