@@ -8,8 +8,10 @@ require('dotenv-expand').expand(
 const config = {
   client_id: process.env.CLIENT_ID || '1',
   client_secret: process.env.CLIENT_SECRET || '1',
-  slack_webhook: process.env.SLACK_WEBHOOK || '1',
+  slack_bot_token: process.env.SLACK_BOT_TOKEN || '',
   slack_channel: process.env.SLACK_CHANNEL || '1',
+  slack_signing_secret: process.env.SLACK_SIGNING_SECRET || '',
+  slack_daily_report_time: process.env.SLACK_DAILY_REPORT_TIME || '21:00',
   projects_cache_time: 30 * 1000, // 30s
   session_expire: parseInt(process.env.SESSION_EXPIRE || 30 * 24 * 60 * 60 * 1000),
   session_refresh_interval: 60 * 1000,
@@ -22,15 +24,18 @@ const config = {
   node_ssh_user: process.env.NODE_USER || 'beamup',
   node_ssh_key: process.env.NODE_SSH_KEY || '/home/dokku/.ssh/id_ed25519_sync',
   node_ssh_port: process.env.NODE_SSH_PORT,
-  slack_warnings_cooldown: 720 * 60 * 1000, // 12h
-  slack_warnings_minimum: 3 // 3 consicultive warnings to trigger the message
+  slack_warnings_cooldown: 30 * 60 * 1000, // 30m
+  slack_warnings_minimum: 3, // 3 consicultive warnings to trigger the message
+  slack_issues_history_days: parseInt(process.env.SLACK_ISSUES_HISTORY_DAYS || 14),
 };
 
 const envVarsSchema = Joi.object({
   client_id: Joi.string().required(),
   client_secret: Joi.string().required(),
-  slack_webhook: Joi.string().required(),
+  slack_bot_token: Joi.string().allow('').required(),
   slack_channel: Joi.string().required(),
+  slack_signing_secret: Joi.string().allow('').required(),
+  slack_daily_report_time: Joi.string().required(),
   projects_cache_time: Joi.number().required(),
   session_expire: Joi.number().required(),
   session_refresh_interval: Joi.number().required(),
@@ -45,6 +50,7 @@ const envVarsSchema = Joi.object({
   node_ssh_port: Joi.string(),
   slack_warnings_cooldown: Joi.number().required(),
   slack_warnings_minimum: Joi.number().required(),
+  slack_issues_history_days: Joi.number().required(),
 });
 
 const { error } = envVarsSchema.validate(config);

@@ -4,6 +4,7 @@ const getSwarmNodes = require('./getSwarmNodes');
 const config = require('./config');
 const getSSHCommand = require('./getSSHCommand');
 const deletingState = require('./deletingState');
+const alertState = require('./alertState');
 
 function get3largestIdx(arr) {
     let fst = -Infinity, sec = -Infinity, thd = -Infinity
@@ -58,6 +59,14 @@ const checkWarnings = (nodeHost, serverUsage) => {
         const idx = vals.indexOf(maxNum);
         const issueWith = types[idx];
         let msg = `${issueType} on server ${nodeHost}, CPU: ${serverUsage?.cpu}, MEM: ${serverUsage?.mem}, HDD: ${serverUsage?.hdd}\n`;
+        alertState.recordIssue({
+            nodeHost,
+            issueType,
+            issueWith,
+            cpu: serverUsage?.cpu,
+            mem: serverUsage?.mem,
+            hdd: serverUsage?.hdd,
+        });
         if (['cpu', 'mem'].includes(issueWith) && Array.isArray(serverUsage.containers) && serverUsage.containers.length) {
             const containersUsage = serverUsage.containers.map(el => {
                 const val = el[issueWith === 'cpu' ? 'CPUPerc' : 'MemPerc'];
@@ -70,7 +79,7 @@ const checkWarnings = (nodeHost, serverUsage) => {
         }
         warningsHistory[nodeHost].unshift(serverUsage);
         if (warningsHistory[nodeHost].length >= config.slack_warnings_minimum) {
-            if (Date.now() - lastMsgTime > config.slack_warnings_cooldown) {
+            if (!alertState.isMuted() && Date.now() - lastMsgTime > config.slack_warnings_cooldown) {
                 lastMsgTime = Date.now();
                 slack.say(msg);
             } 

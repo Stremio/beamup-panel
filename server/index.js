@@ -12,20 +12,25 @@ const sessions = require('./sessions')
 
 const getSSHCommand = require('./getSSHCommand');
 const getGeneralUsage = require('./getGeneralUsage')
+const slack = require('./slack')
+const slackCommands = require('./slackCommands')
+const alertState = require('./alertState')
+const { buildReport, rangeForPreset } = require('./slackReport')
 
 const config = require("./config");
 
 const app = express();
 
+const captureRawBody = (req, res, buf) => {
+    req.rawBody = buf;
+};
+
 app.use(
     bodyParser.json({
-        verify: (req, res, buf) => {
-            req.rawBody = buf;
-        },
+        verify: captureRawBody,
     }),
 );
-app.use(bodyParser.json({ type: 'text/*' }));
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: false, verify: captureRawBody }));
 
 app.use(
     cookieSession({
@@ -136,6 +141,8 @@ app.get('/getProjectUsage', protectedRoute, async (req, res) => {
         return res.status(500).json({ errMessage: 'You do not have access to this project' });
     }
 })
+
+app.post('/slack/events', slackCommands.eventsEndpoint);
 
 function userHasProject(login, proj) {
     return login && proj && proj.startsWith(getUserHash(login)+'-') && projects.find(el => el.name === proj)
@@ -319,6 +326,36 @@ app.listen(PORT, () => {
 });
 
 const sessionsFolder = config.sessions_folder || '../'
+
+function reportDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function dailyReportTimeReached(now) {
+    const [hour, minute] = config.slack_daily_report_time.split(':').map(el => parseInt(el));
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return false;
+    return now.getHours() > hour || (now.getHours() === hour && now.getMinutes() >= minute);
+}
+
+async function checkDailySlackReport() {
+    const now = new Date();
+    const key = reportDateKey(now);
+    if (!dailyReportTimeReached(now) || alertState.getLastDailyReportKey() === key) {
+        return;
+    }
+
+    const range = rangeForPreset('today');
+    const report = await buildReport(range);
+    if (report.hasIssues) {
+        slack.say(report.text, report.files);
+    }
+    alertState.setLastDailyReportKey(key);
+}
+
+setInterval(checkDailySlackReport, 60 * 1000);
 
 const logUsage = () => {
     async function updateServerUsage() {

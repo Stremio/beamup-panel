@@ -13,6 +13,7 @@
 	},
 	"dependencies": {
 		"@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+		"@slack/web-api": "^7.15.2",
 		"@testing-library/jest-dom": "^5.11.9",
 		"@testing-library/react": "^11.2.3",
 		"@testing-library/user-event": "^12.6.0",
@@ -20,8 +21,11 @@
 		"atomic-json-store": "1.0.0",
 		"axios": "^1.6.0",
 		"body-parser": "^1.19.0",
+		"chart.js": "^4.5.1",
+		"chartjs-node-canvas": "^5.0.0",
 		"concurrently": "^5.1.0",
 		"cookie-session": "^2.0.0",
+		"crypto-js": "4.2.0",
 		"dotenv": "^8.2.0",
 		"dotenv-expand": "^10.0.0",
 		"express": "^4.17.1",
@@ -37,8 +41,7 @@
 		"react-router": "^6.17.0",
 		"react-router-dom": "^6.17.0",
 		"react-scripts": "^5.0.1",
-		"sass": "^1.69.5",
-		"crypto-js": "4.2.0"
+		"sass": "^1.69.5"
 	},
 	"eslintConfig": {
 		"extends": "react-app"
